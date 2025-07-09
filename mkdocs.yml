@@ -1,0 +1,20 @@
+site_name: TheH4ckademy
+
+theme:
+  name: simple-blog
+  language: en
+  palette:
+    primary: teal
+  features:
+    - navigation.instant: false
+
+nav:
+  - Home: index.md
+
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - pymdownx.betterem
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
