@@ -42,8 +42,6 @@ Chaque write-up contient :
 - Base de données : `MongoDB`, `PostgreSQL`, etc.
 - Hébergement : `Vercel`, `Netlify`, `OVH`, etc.
 
-*(Adapte cette section selon ton architecture réelle)*
-
 ---
 
 ## 🤝 Contribuer
@@ -76,4 +74,3 @@ Développé et maintenu par **Anthony KOUROGHLI (anthkrg) et Bastien Lejars ()**
 ---
 
 ## ⭐ N'oublie pas de laisser une étoile si tu aimes le projet !
-
