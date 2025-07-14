@@ -1,16 +1,13 @@
 site_name: TheH4ckademy
 
 theme:
-  name: simple-blog
+  name: shadcn
   language: en
-  palette:
-    primary: teal
-  features:
-    - navigation.instant: false
 
 nav:
-  - Home: index.md
-
+  - 🧠 TheH4ckademy: index.md
+  - TryHackMe: 
+    - TryHackMe/ledger.md
 
 markdown_extensions:
   - admonition
@@ -18,3 +15,4 @@ markdown_extensions:
   - pymdownx.betterem
   - pymdownx.inlinehilite
   - pymdownx.snippets
+
