@@ -1,0 +1,18 @@
+site_name: TheH4ckademy
+
+theme:
+  name: shadcn
+  language: en
+
+nav:
+  - 🧠 TheH4ckademy: index.md
+  - TryHackMe: 
+    - TryHackMe/ledger.md
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - pymdownx.betterem
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+
