@@ -7,7 +7,7 @@ theme:
 nav:
   - 🧠 TheH4ckademy: index.md
   - TryHackMe: 
-    - TryHackMe/ledger.md
+    - TryHackMe/reset.md
 
 markdown_extensions:
   - admonition
