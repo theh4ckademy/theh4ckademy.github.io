@@ -1,4 +1,5 @@
 site_name: TheH4ckademy
+site_url: https://theh4ckademy.github.io/
 
 theme:
   name: shadcn
