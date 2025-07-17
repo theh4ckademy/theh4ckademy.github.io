@@ -8,6 +8,7 @@ nav:
   - 🧠 TheH4ckademy: index.md
   - TryHackMe: 
     - TryHackMe/reset.md
+    - TryHackMe/ledger.md
 
 markdown_extensions:
   - admonition
