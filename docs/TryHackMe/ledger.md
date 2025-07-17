@@ -17,6 +17,30 @@ nmap -sC -sV -Pn -T4 -p- <IP>
 
 [![Nmap output](../images/Ledger/nmap_output.png)](../images/Ledger/nmap_output.png)
 
+---
+
+### 1.1 Exegol-history
+
+`exegol-history` est un mécanisme ou module souvent utilisé dans l’environnement Exegol, un conteneur Docker offensif conçu pour les pentesters et Red Teamers. Il permet, entre autres, de personnaliser la session de travail dans le conteneur, notamment via le chargement de variables d’environnement dès l’ouverture d’un terminal Exegol.
+
+L’intérêt principal est de pré-configurer automatiquement des variables sensibles ou utiles à chaque engagement, comme :
+
+    TARGET : nom ou IP de la cible
+
+    DOMAIN : domaine Active Directory attaqué
+
+    USERNAME : compte compromis durant le pentest
+
+    PASSWORD : mot de passe du compte associé
+
+    ... 
+
+[![Exegol-history](../images/Reset/exegol_history.png)](../images/Reset/exegol_history.png)
+
+Cela évite de devoir les retaper à chaque fois, permet de les utiliser dans des scripts ou des outils (NetExec, Impacket, etc.), et standardise l’environnement d’un opérateur à l’autre.
+
+---
+
 ### 📡 Ports ouverts – Analyse initiale
 
 Voici les ports détectés par Nmap, avec une analyse rapide des opportunités potentielles :
@@ -69,7 +93,15 @@ Direction le port 80 (HTTP) puis 443 (HTTPS). L’accès renvoie une page par d�
 
 [![ldapsearch](../images/Ledger/ldapsearch.png)](../images/Ledger/ldapsearch.png)
 
+On grep l'output avec `description`
+
+[![ldapsearch](../images/Ledger/ldapdump.png)](../images/Ledger/ldapdump.png)
+
+Puis en descendant un peu on remarque:
+
 [![ldapsearch](../images/Ledger/ldapdump_description.png)](../images/Ledger/ldapdump_description.png)
+
+On extrait les users associés à ce mot de passe par défaut
 
 [![ldapsearch](../images/Ledger/ldapdump_users.png)](../images/Ledger/ldapdump_users.png)
 
@@ -99,6 +131,8 @@ Puis on se connecte avec le user qui peut établir une session RDP avec la machi
 
 On récupère le flag `user.txt`
 
+[![user.txt](../images/Ledger/user_txt.png)](../images/Ledger/user_txt.png)
+
 
 ---
 
@@ -106,15 +140,17 @@ On récupère le flag `user.txt`
 
 On explore les groupes auxquels Susanna appartient et… oh :
 
-[![Groups](../images/Ledger/groups.png)](../images/Ledger/groups.png)
+[![Groups](../images/Ledger/group.png)](../images/Ledger/group.png)
 
-Certificate Service DCOM Access
+`Certificate Service DCOM Access`
 
 🧠 Réfléchis : Cela te donne-t-il un levier sur les services de certificats Windows ? Tu peux peut-être demander un certificat d’authentification machine...
 
 Utilisation de Certipy, un outil redoutable pour cet univers :
 
 [![Certify_find](../images/Ledger/certipy_find.png)](../images/Ledger/certipy_find.png)
+
+[![Template](../images/Ledger/template_vuln.png)](../images/Ledger/template_vuln.png)
 
 Un template vulnérable est découvert ! On tente alors :
 
