@@ -1,10 +1,10 @@
-# 🧠 TheH4ckademy
+# 🧠 The H4ckademy
 
 [🇫🇷 Version française](#francais) | [🇬🇧 English version](#english)
 
 ## English
 
-Welcome to **TheH4ckademy**, the platform dedicated to cybersecurity enthusiasts!  
+Welcome to **The H4ckademy**, the platform dedicated to cybersecurity enthusiasts!  
 Here, you’ll find **complete CTF write-ups** (*Capture The Flag*), organized by category, difficulty level, and events.
 
 ---
@@ -35,7 +35,7 @@ Each write-up includes:
 
 ### 🌐 Platform Access
 
-🔗 [TheH4ckademy](https://theh4ckademy.github.io)
+🔗 [The H4ckademy](https://theh4ckademy.github.io)
 
 ---
 
