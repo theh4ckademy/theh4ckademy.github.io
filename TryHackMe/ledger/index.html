@@ -408,18 +408,170 @@
 
     </div>
     <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
-        <p><strong>Catégorie :</strong> Active Directory<br />
+        <p><a href="#francais">🇫🇷 Version française</a> | <a href="#english">🇬🇧 English version</a></p>
+<h2 id="english">English</h2>
+<p><strong>Category:</strong> Active Directory<br />
+<strong>Platform:</strong> TryHackMe<br />
+<strong>Goal:</strong> The <strong>Ledger</strong> machine simulates an Active Directory environment where the attacker must enumerate users via LDAP, exploit default passwords to gain an initial user foothold, and then escalate privileges by abusing a misconfiguration in Active Directory Certificate Services (ADCS). The final objective is to obtain a certificate that allows authentication as <strong>Administrator</strong>.</p>
+<hr />
+<h3 id="1-nmap-scan-what-does-the-infrastructure-hold">1. Nmap Scan – What does the infrastructure hold?</h3>
+<p>Before jumping into the flashy tools, we keep it classic: a good old Nmap scan to lay the foundation of our understanding.</p>
+<pre class="codehilite"><code class="language-bash">nmap -sC -sV -Pn -T4 -p- &lt;IP&gt;
+</code></pre>
+
+<p><a href="../../images/Ledger/nmap_output.png"><img alt="Nmap output" src="../../images/Ledger/nmap_output.png" /></a></p>
+<hr />
+<h4 id="11-exegol-history">1.1 Exegol-history</h4>
+<p><code>exegol-history</code> is a mechanism or module often used in the Exegol environment, a Docker offensive container designed for pentesters and Red Teamers. It allows customization of the working session in the container, notably by loading environment variables when opening an Exegol terminal.</p>
+<p>Its main benefit is the automatic pre-configuration of sensitive or useful variables for each engagement, such as:</p>
+<pre class="codehilite"><code>TARGET : name or IP of the target
+
+DOMAIN : Active Directory domain being attacked
+
+USERNAME : compromised account during the pentest
+
+PASSWORD : associated account password
+
+...
+</code></pre>
+
+<p><a href="../../images/Reset/exegol_history.png"><img alt="Exegol-history" src="../../images/Reset/exegol_history.png" /></a></p>
+<p>This avoids retyping them each time, allows use in scripts/tools (NetExec, Impacket, etc.), and standardizes environments across operators.</p>
+<hr />
+<h4 id="open-ports-initial-analysis">📡 Open Ports – Initial Analysis</h4>
+<p>Here are the ports detected by Nmap, with a quick analysis of potential opportunities:</p>
+<table>
+<thead>
+<tr>
+<th>Port</th>
+<th>Service</th>
+<th>Interpretation / Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>53</td>
+<td>DNS</td>
+<td>🔎 <strong>Test for zone transfer</strong></td>
+</tr>
+<tr>
+<td>80</td>
+<td>HTTP</td>
+<td>🌐 <strong>Web investigation</strong> (classic site?)</td>
+</tr>
+<tr>
+<td>88</td>
+<td>Kerberos</td>
+<td>🔓 <strong>ASREPRoasting</strong> if usernames are known</td>
+</tr>
+<tr>
+<td>135</td>
+<td>RPC</td>
+<td>📤 Enumeration via <strong>rpcdump</strong></td>
+</tr>
+<tr>
+<td>139</td>
+<td>NetBIOS</td>
+<td>📂 Enumeration with <strong>smbmap</strong>/<strong>enum4linux</strong></td>
+</tr>
+<tr>
+<td>445</td>
+<td>SMB</td>
+<td>📂 Potential shares, rights, SMB enumeration</td>
+</tr>
+<tr>
+<td>389</td>
+<td>LDAP</td>
+<td>🧬 <strong>ldapsearch</strong> to extract accounts</td>
+</tr>
+<tr>
+<td>443</td>
+<td>HTTPS</td>
+<td>🌐 <strong>Secure web version</strong>, worth checking out</td>
+</tr>
+<tr>
+<td>3389</td>
+<td>RDP</td>
+<td>🔐 <strong>Remote access</strong> if valid credentials exist</td>
+</tr>
+</tbody>
+</table>
+<p>We leak:
+- The Domain name --&gt; <code>thm.local</code>
+- The machine's FQDN --&gt; <code>labyrinth.thm.local</code></p>
+<h3 id="2-dns-can-we-extract-info-easily">2. DNS – Can we extract info easily?</h3>
+<p>A little zone transfer test — often overlooked but sometimes quite revealing:</p>
+<p><a href="../../images/Ledger/dig.png"><img alt="DNS Zone Transfer" src="../../images/Ledger/dig.png" /></a></p>
+<p>❌ Failed.</p>
+<p>No worries, let’s hunt for intel elsewhere.</p>
+<hr />
+<h3 id="3-httphttps-any-hope-on-the-web">3. HTTP/HTTPS – Any hope on the web?</h3>
+<p>We head to port 80 (HTTP) then 443 (HTTPS). The site shows a default IIS landing page.</p>
+<p><a href="../../images/Ledger/IIS.png"><img alt="Web Server" src="../../images/Ledger/IIS.png" /></a></p>
+<hr />
+<h3 id="4-smbrpc-juicy-shares">4. SMB/RPC – Juicy shares?</h3>
+<p><a href="../../images/Ledger/enum4linux.png"><img alt="enum4linux" src="../../images/Ledger/enum4linux.png" /></a></p>
+<p>❌ Nothing useful. Looks like authentication is required to get anything valuable. Let’s revisit later.</p>
+<hr />
+<h3 id="5-ldap-the-rare-gem">5. LDAP – The Rare Gem?</h3>
+<p><a href="../../images/Ledger/ldapsearch.png"><img alt="ldapsearch" src="../../images/Ledger/ldapsearch.png" /></a></p>
+<p>We grep the output with <code>description</code></p>
+<p><a href="../../images/Ledger/ldapdump.png"><img alt="ldapsearch" src="../../images/Ledger/ldapdump.png" /></a></p>
+<p>Then, scrolling down a bit, we notice:</p>
+<p><a href="../../images/Ledger/ldapdump_description.png"><img alt="ldapsearch" src="../../images/Ledger/ldapdump_description.png" /></a></p>
+<p>We extract the users associated with this default password</p>
+<p><a href="../../images/Ledger/ldapdump_users.png"><img alt="ldapsearch" src="../../images/Ledger/ldapdump_users.png" /></a></p>
+<p>💥 Bingo! Two users appear with the same default password:</p>
+<p>IVY_WILLIS</p>
+<p>SUSANNA_MCKNIGHT</p>
+<hr />
+<h3 id="6-rdp-a-gateway-to-the-system">6. RDP – A Gateway to the System?</h3>
+<p>We test the possibility that the users found previously can connect via RDP:</p>
+<p><a href="../../images/Ledger/nxc_fail.png"><img alt="nxc" src="../../images/Ledger/nxc_fail.png" /></a></p>
+<p><a href="../../images/Ledger/nxc_success.png"><img alt="nxc" src="../../images/Ledger/nxc_success.png" /></a></p>
+<p>Then we connect with the user who can establish an RDP session with the machine</p>
+<p><a href="../../images/Ledger/rdp.png"><img alt="xfreerdp" src="../../images/Ledger/rdp.png" /></a></p>
+<p>We retrieve the <code>user.txt</code> flag</p>
+<p><a href="../../images/Ledger/user_txt.png"><img alt="user.txt" src="../../images/Ledger/user_txt.png" /></a></p>
+<hr />
+<h3 id="7-privesc-privilege-escalation-via-certificates">7. PrivEsc – Privilege Escalation via Certificates 🧩</h3>
+<p>We explore the groups to which Susanna belongs and... oh:</p>
+<p><a href="../../images/Ledger/group.png"><img alt="Groups" src="../../images/Ledger/group.png" /></a></p>
+<p><code>Certificate Service DCOM Access</code></p>
+<p>🧠 Think: Does this give you leverage over Windows certificate services? You might be able to request a machine authentication certificate...</p>
+<p>Using Certipy, a powerful tool for this universe:</p>
+<p><a href="../../images/Ledger/certipy_find.png"><img alt="Certify_find" src="../../images/Ledger/certipy_find.png" /></a></p>
+<p><a href="../../images/Ledger/template_vuln.png"><img alt="Template" src="../../images/Ledger/template_vuln.png" /></a></p>
+<p>A vulnerable template is discovered! We then attempt:</p>
+<p><a href="../../images/Ledger/certipy_req.png"><img alt="Certipy_req" src="../../images/Ledger/certipy_req.png" /></a></p>
+<p>We obtain a certificate that allows us to authenticate as Administrator 😈</p>
+<p><a href="../../images/Ledger/certipy_auth.png"><img alt="tgt" src="../../images/Ledger/certipy_auth.png" /></a></p>
+<p>And there we have an Administrator TGT. The key to the kingdom.</p>
+<hr />
+<h3 id="8-admin-connection-the-loop-is-closed">8. Admin Connection – The Loop is Closed</h3>
+<p>With a valid TGT, a wmiexec.py from Impacket gives us a direct shell as admin:</p>
+<p><a href="../../images/Ledger/root.txt.png"><img alt="root.txt" src="../../images/Ledger/root.txt.png" /></a></p>
+<p>And the Grail awaits us!</p>
+<hr />
+<h3 id="conclusion">Conclusion</h3>
+<p>This challenge is an excellent example of a realistic Active Directory scenario:</p>
+<p>Passive reconnaissance (DNS, LDAP, Nmap)</p>
+<p>Exploitation of bad practices (default passwords)</p>
+<p>Escalation via ADCS (Active Directory Certificate Services)</p>
+<hr />
+<h2 id="francais">Français</h2>
+<p><strong>Catégorie :</strong> Active Directory<br />
 <strong>Plateforme :</strong> TryHackMe<br />
 <strong>Objectif :</strong> La machine <strong>Ledger</strong> simule un environnement Active Directory dans lequel l’attaquant doit énumérer des utilisateurs via LDAP, exploiter des mots de passe par défaut pour obtenir un premier accès utilisateur, puis élever ses privilèges en abusant d’une mauvaise configuration d’Active Directory Certificate Services (ADCS). L’objectif final est d’obtenir un certificat permettant de s’authentifier comme <strong>Administrator</strong>.</p>
 <hr />
-<h2 id="1-scan-nmap-que-nous-reserve-linfrastructure">1. Scan Nmap – Que nous réserve l'infrastructure ?</h2>
+<h3 id="1-scan-nmap-que-nous-reserve-linfrastructure">1. Scan Nmap – Que nous réserve l'infrastructure ?</h3>
 <p>Avant de sauter sur les outils les plus sexy, on reste sobre : un bon vieux scan Nmap pour poser les fondations de notre compréhension.</p>
 <pre class="codehilite"><code class="language-bash">nmap -sC -sV -Pn -T4 -p- &lt;IP&gt;
 </code></pre>
 
 <p><a href="../../images/Ledger/nmap_output.png"><img alt="Nmap output" src="../../images/Ledger/nmap_output.png" /></a></p>
 <hr />
-<h3 id="11-exegol-history">1.1 Exegol-history</h3>
+<h4 id="11-exegol-history_1">1.1 Exegol-history</h4>
 <p><code>exegol-history</code> est un mécanisme ou module souvent utilisé dans l’environnement Exegol, un conteneur Docker offensif conçu pour les pentesters et Red Teamers. Il permet, entre autres, de personnaliser la session de travail dans le conteneur, notamment via le chargement de variables d’environnement dès l’ouverture d’un terminal Exegol.</p>
 <p>L’intérêt principal est de pré-configurer automatiquement des variables sensibles ou utiles à chaque engagement, comme :</p>
 <pre class="codehilite"><code>TARGET : nom ou IP de la cible
@@ -436,7 +588,7 @@ PASSWORD : mot de passe du compte associé
 <p><a href="../../images/Reset/exegol_history.png"><img alt="Exegol-history" src="../../images/Reset/exegol_history.png" /></a></p>
 <p>Cela évite de devoir les retaper à chaque fois, permet de les utiliser dans des scripts ou des outils (NetExec, Impacket, etc.), et standardise l’environnement d’un opérateur à l’autre.</p>
 <hr />
-<h3 id="ports-ouverts-analyse-initiale">📡 Ports ouverts – Analyse initiale</h3>
+<h4 id="ports-ouverts-analyse-initiale">📡 Ports ouverts – Analyse initiale</h4>
 <p>Voici les ports détectés par Nmap, avec une analyse rapide des opportunités potentielles :</p>
 <table>
 <thead>
@@ -497,21 +649,21 @@ PASSWORD : mot de passe du compte associé
 <p>On fuite:
 - Le Domain name --&gt; <code>thm.local</code>
 - Le FQDN  de la machine --&gt; <code>labyrinth.thm.local</code></p>
-<h2 id="dns-peut-on-aspirer-des-infos-facilement">DNS – Peut-on aspirer des infos facilement ?</h2>
+<h3 id="2-dns-peut-on-aspirer-des-infos-facilement">2. DNS – Peut-on aspirer des infos facilement ?</h3>
 <p>Un petit test de zone transfer, souvent négligé mais parfois très parlant :</p>
 <p><a href="../../images/Ledger/dig.png"><img alt="DNS Zone Transfer" src="../../images/Ledger/dig.png" /></a></p>
 <p>❌ Échec.</p>
 <p>Pas grave, on poursuit notre chasse aux infos ailleurs.</p>
 <hr />
-<h2 id="3-httphttps-espoir-sur-le-web">3. HTTP/HTTPS – Espoir sur le web ?</h2>
+<h3 id="3-httphttps-espoir-sur-le-web">3. HTTP/HTTPS – Espoir sur le web ?</h3>
 <p>Direction le port 80 (HTTP) puis 443 (HTTPS). L’accès renvoie une page par défaut IIS.</p>
 <p><a href="../../images/Ledger/IIS.png"><img alt="Web Server" src="../../images/Ledger/IIS.png" /></a></p>
 <hr />
-<h2 id="4-smbrpc-partages-juteux">4. SMB/RPC – Partages juteux ?</h2>
+<h3 id="4-smbrpc-partages-juteux">4. SMB/RPC – Partages juteux ?</h3>
 <p><a href="../../images/Ledger/enum4linux.png"><img alt="enum4linux" src="../../images/Ledger/enum4linux.png" /></a></p>
 <p>❌ Rien d’exploitable. On dirait qu’il faut être authentifié pour obtenir quelque chose. Revenons plus tard.</p>
 <hr />
-<h2 id="5-ldap-la-perle-rare">5. LDAP – La perle rare ?</h2>
+<h3 id="5-ldap-la-perle-rare">5. LDAP – La perle rare ?</h3>
 <p><a href="../../images/Ledger/ldapsearch.png"><img alt="ldapsearch" src="../../images/Ledger/ldapsearch.png" /></a></p>
 <p>On grep l'output avec <code>description</code></p>
 <p><a href="../../images/Ledger/ldapdump.png"><img alt="ldapsearch" src="../../images/Ledger/ldapdump.png" /></a></p>
@@ -526,7 +678,7 @@ SUSANNA_MCKNIGHT
 </code></pre>
 
 <hr />
-<h2 id="6-rdp-une-ouverture-vers-le-systeme">6. RDP – Une ouverture vers le système ?</h2>
+<h3 id="6-rdp-une-ouverture-vers-le-systeme">6. RDP – Une ouverture vers le système ?</h3>
 <p>On teste la possibilité que les users trouvé précédemment puissent se connecter en RDP:</p>
 <p><a href="../../images/Ledger/nxc_fail.png"><img alt="nxc" src="../../images/Ledger/nxc_fail.png" /></a></p>
 <p><a href="../../images/Ledger/nxc_success.png"><img alt="nxc" src="../../images/Ledger/nxc_success.png" /></a></p>
@@ -535,7 +687,7 @@ SUSANNA_MCKNIGHT
 <p>On récupère le flag <code>user.txt</code></p>
 <p><a href="../../images/Ledger/user_txt.png"><img alt="user.txt" src="../../images/Ledger/user_txt.png" /></a></p>
 <hr />
-<h2 id="7-privesc-lescalade-par-les-certificats">7. PrivEsc – L’escalade par les certificats 🧩</h2>
+<h3 id="7-privesc-lescalade-par-les-certificats">7. PrivEsc – L’escalade par les certificats 🧩</h3>
 <p>On explore les groupes auxquels Susanna appartient et… oh :</p>
 <p><a href="../../images/Ledger/group.png"><img alt="Groups" src="../../images/Ledger/group.png" /></a></p>
 <p><code>Certificate Service DCOM Access</code></p>
@@ -549,12 +701,12 @@ SUSANNA_MCKNIGHT
 <p><a href="../../images/Ledger/certipy_auth.png"><img alt="tgt" src="../../images/Ledger/certipy_auth.png" /></a></p>
 <p>Et voilà un TGT Administrator en poche. La clé du royaume.</p>
 <hr />
-<h2 id="8-connexion-admin-la-boucle-est-bouclee">8. Connexion Admin – La boucle est bouclée</h2>
+<h3 id="8-connexion-admin-la-boucle-est-bouclee">8. Connexion Admin – La boucle est bouclée</h3>
 <p>Avec un TGT valide, un wmiexec.py de Impacket nous donne un shell direct en tant qu’admin :</p>
 <p><a href="../../images/Ledger/root.txt.png"><img alt="root.txt" src="../../images/Ledger/root.txt.png" /></a></p>
 <p>Et le Graal nous attend !</p>
 <hr />
-<h2 id="conclusion">Conclusion</h2>
+<h3 id="conclusion_1">Conclusion</h3>
 <p>Ce challenge est un excellent exemple d’un scénario réaliste d'Active Directory :</p>
 <pre class="codehilite"><code>Reconnaissance passive (DNS, LDAP, Nmap)
 
@@ -662,89 +814,131 @@ Escalade via ADCS (Active Directory Certificate Services)
         
         
         
-        <a href="#1-scan-nmap-que-nous-reserve-linfrastructure"
+        <a href="#english"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
-            1. Scan Nmap – Que nous réserve l'infrastructure ?
+            English
         </a>
         
         
-        <a href="#11-exegol-history"
+        <a href="#1-nmap-scan-what-does-the-infrastructure-hold"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="3">
-            1.1 Exegol-history
+            1. Nmap Scan – What does the infrastructure hold?
         </a>
         
-        <a href="#ports-ouverts-analyse-initiale"
+        <a href="#2-dns-can-we-extract-info-easily"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="3">
-            📡 Ports ouverts – Analyse initiale
+            2. DNS – Can we extract info easily?
         </a>
         
-        
-
-        
-        <a href="#dns-peut-on-aspirer-des-infos-facilement"
+        <a href="#3-httphttps-any-hope-on-the-web"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2">
-            DNS – Peut-on aspirer des infos facilement ?
+            data-active="false" data-depth="3">
+            3. HTTP/HTTPS – Any hope on the web?
         </a>
         
-
-        
-        <a href="#3-httphttps-espoir-sur-le-web"
+        <a href="#4-smbrpc-juicy-shares"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2">
-            3. HTTP/HTTPS – Espoir sur le web ?
+            data-active="false" data-depth="3">
+            4. SMB/RPC – Juicy shares?
         </a>
         
-
-        
-        <a href="#4-smbrpc-partages-juteux"
+        <a href="#5-ldap-the-rare-gem"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2">
-            4. SMB/RPC – Partages juteux ?
+            data-active="false" data-depth="3">
+            5. LDAP – The Rare Gem?
         </a>
         
-
-        
-        <a href="#5-ldap-la-perle-rare"
+        <a href="#6-rdp-a-gateway-to-the-system"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2">
-            5. LDAP – La perle rare ?
+            data-active="false" data-depth="3">
+            6. RDP – A Gateway to the System?
         </a>
         
-
-        
-        <a href="#6-rdp-une-ouverture-vers-le-systeme"
+        <a href="#7-privesc-privilege-escalation-via-certificates"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2">
-            6. RDP – Une ouverture vers le système ?
+            data-active="false" data-depth="3">
+            7. PrivEsc – Privilege Escalation via Certificates 🧩
         </a>
         
-
-        
-        <a href="#7-privesc-lescalade-par-les-certificats"
+        <a href="#8-admin-connection-the-loop-is-closed"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2">
-            7. PrivEsc – L’escalade par les certificats 🧩
+            data-active="false" data-depth="3">
+            8. Admin Connection – The Loop is Closed
         </a>
-        
-
-        
-        <a href="#8-connexion-admin-la-boucle-est-bouclee"
-            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2">
-            8. Connexion Admin – La boucle est bouclée
-        </a>
-        
-
         
         <a href="#conclusion"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2">
+            data-active="false" data-depth="3">
             Conclusion
         </a>
+        
+        
+
+        
+        <a href="#francais"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Français
+        </a>
+        
+        
+        <a href="#1-scan-nmap-que-nous-reserve-linfrastructure"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            1. Scan Nmap – Que nous réserve l'infrastructure ?
+        </a>
+        
+        <a href="#2-dns-peut-on-aspirer-des-infos-facilement"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            2. DNS – Peut-on aspirer des infos facilement ?
+        </a>
+        
+        <a href="#3-httphttps-espoir-sur-le-web"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            3. HTTP/HTTPS – Espoir sur le web ?
+        </a>
+        
+        <a href="#4-smbrpc-partages-juteux"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            4. SMB/RPC – Partages juteux ?
+        </a>
+        
+        <a href="#5-ldap-la-perle-rare"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            5. LDAP – La perle rare ?
+        </a>
+        
+        <a href="#6-rdp-une-ouverture-vers-le-systeme"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            6. RDP – Une ouverture vers le système ?
+        </a>
+        
+        <a href="#7-privesc-lescalade-par-les-certificats"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            7. PrivEsc – L’escalade par les certificats 🧩
+        </a>
+        
+        <a href="#8-connexion-admin-la-boucle-est-bouclee"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            8. Connexion Admin – La boucle est bouclée
+        </a>
+        
+        <a href="#conclusion_1"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            Conclusion
+        </a>
+        
         
 
         

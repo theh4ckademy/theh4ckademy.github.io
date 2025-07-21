@@ -395,7 +395,166 @@
 
     </div>
     <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
-        <p><strong>Catégorie :</strong> Active Directory<br />
+        <p><a href="#francais">🇫🇷 Version française</a> | <a href="#english">🇬🇧 English version</a></p>
+<h2 id="english">English</h2>
+<p><strong>Category:</strong> Active Directory
+<strong>Platform:</strong> TryHackMe
+<strong>Objective:</strong> Gain access to a Domain Admin account on a Windows machine by analyzing the Active Directory infrastructure, capturing hashes, identifying attack paths, and exploiting misconfigured Kerberos delegation.</p>
+<hr />
+<h3 id="1-initial-scan-with-nmap">1. Initial Scan with Nmap</h3>
+<p>As always, we start with basic mapping. What services are running on this machine? Which ports are exposed? We run a full scan with Nmap:</p>
+<pre class="codehilite"><code class="language-bash">nmap -sC -sV -Pn -T4 -p- &quot;\$TARGET&quot;
+</code></pre>
+
+<p><a href="../../images/Reset/nmap.png"><img alt="Nmap output" src="../../images/Reset/nmap.png" /></a></p>
+<p>A few points to note here:</p>
+<table>
+<thead>
+<tr>
+<th>Point</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Port <strong>53 (DNS)</strong> is open</td>
+<td>Is a zone transfer possible?</td>
+</tr>
+<tr>
+<td>Port <strong>88 (Kerberos)</strong> is accessible</td>
+<td>Could there be users vulnerable to <strong>AS-REP Roasting</strong>?</td>
+</tr>
+<tr>
+<td>Ports <strong>135 / 139 / 445 (RPC / SMB)</strong></td>
+<td>Could give us access to shares</td>
+</tr>
+<tr>
+<td><strong>RDP (3389)</strong> and <strong>WinRM (5985)</strong></td>
+<td>Require credentials but become very useful once we have a foothold in the domain</td>
+</tr>
+</tbody>
+</table>
+<p>Note that the Nmap scan allowed us to leak:
+- The domain: <code>thm.corp</code>
+- The FQDN of the machine: <code>HayStack.thm.corp</code></p>
+<hr />
+<h4 id="11-exegol-history">1.1 Exegol-history</h4>
+<p><code>exegol-history</code> is a mechanism or module often used in the Exegol environment, an offensive Docker container designed for pentesters and Red Teamers. It allows, among other things, customization of the working session in the container, particularly through the loading of environment variables as soon as an Exegol terminal is opened.</p>
+<p>The main benefit is the automatic pre-configuration of sensitive or useful variables for each engagement, such as:
+- TARGET: name or IP of the target
+- DOMAIN: Active Directory domain under attack
+- USERNAME: account compromised during the pentest
+- PASSWORD: password of the associated account
+- ...</p>
+<p><a href="../../images/Reset/exegol_history.png"><img alt="Exegol-history" src="../../images/Reset/exegol_history.png" /></a></p>
+<p>This avoids having to retype them each time, allows their use in scripts or tools (NetExec, Impacket, etc.), and standardizes the environment from one operator to another.</p>
+<hr />
+<h3 id="2-dns-zone-transfer">2. DNS Zone Transfer</h3>
+<p>First reflex in the presence of DNS: test a <strong>zone transfer</strong>.</p>
+<p><a href="../../images/Reset/dns_zone_transfer.png"><img alt="DNS Zone Transfer" src="../../images/Reset/dns_zone_transfer.png" /></a></p>
+<p>Unfortunately, the operation fails.</p>
+<hr />
+<h3 id="3-smb-enumeration">3. SMB Enumeration</h3>
+<p>Let's move on to the SMB ports. We use <strong>enum4linux</strong> to extract as much information as possible about the domain and shares.</p>
+<p><a href="../../images/Reset/enum4linux.png"><img alt="Enum4linux" src="../../images/Reset/enum4linux.png" /></a>
+<a href="../../images/Reset/shares_enum4linux.png"><img alt="Shares Enum4linux" src="../../images/Reset/shares_enum4linux.png" /></a>
+A share named <strong>Data</strong> is accessible.
+We confirm the presence and restrictions of this share with smbmap.
+<a href="../../images/Reset/smbmap.png"><img alt="SMB shares" src="../../images/Reset/smbmap.png" /></a></p>
+<p>A connection via <code>smbclient</code> allows browsing its contents.</p>
+<p><a href="../../images/Reset/smb_shares.png"><img alt="smbclient" src="../../images/Reset/smb_shares.png" /></a></p>
+<p>Strange thing: the file names change regularly. This suggests an automatic process in the background. Maybe a <strong>service account</strong>?</p>
+<p><a href="../../images/Reset/changement_nom_fichiers.png"><img alt="Filename changed" src="../../images/Reset/changement_nom_fichiers.png" /></a></p>
+<p>This behavior deserves to be provoked... and taken advantage of.</p>
+<hr />
+<h3 id="4-ntlm-hash-capture-via-responder">4. NTLM Hash Capture via Responder</h3>
+<p>The goal here is to capture an <strong>NTLM hash</strong> via an <strong>SMB relay/capture</strong> attack.</p>
+<ul>
+<li>We generate trapped files with <strong>ntlm_theft</strong> (various extensions)</li>
+</ul>
+<p><a href="../../images/Reset/ntlm_theft.png"><img alt="nthlm_theft" src="../../images/Reset/ntlm_theft.png" /></a>
+<a href="../../images/Reset/genrate_file_ntlm_theft.png"><img alt="files" src="../../images/Reset/genrate_file_ntlm_theft.png" /></a></p>
+<ul>
+<li>We upload them to the share</li>
+</ul>
+<p><a href="../../images/Reset/upload_file.png"><img alt="upload_files" src="../../images/Reset/upload_file.png" /></a> </p>
+<ul>
+<li>We launch <strong>Responder</strong> in listening mode</li>
+</ul>
+<p><a href="../../images/Reset/responder.png"><img alt="responder" src="../../images/Reset/responder.png" /></a> </p>
+<p>When a service (such as an automated account) interacts with these files, it sends its credentials in NTLM format.</p>
+<p><a href="../../images/Reset/get_nt_hash.png"><img alt="Responder capture" src="../../images/Reset/get_nt_hash.png" /></a></p>
+<p>At this stage, ask yourself the question: why is this service interacting with my files ? What role does it play in the AD environment ?</p>
+<hr />
+<h3 id="5-ntlm-hash-cracking-and-initial-access">5. NTLM Hash Cracking and Initial Access</h3>
+<p>Once the hash is retrieved, head to <strong>John the Ripper</strong> to brute force it.</p>
+<p><a href="../../images/Reset/crack_hash1.png"><img alt="John cracking" src="../../images/Reset/crack_hash1.png" /></a></p>
+<p>Once the password is discovered, an <strong>Evil-WinRM</strong> session allows connecting to the machine.</p>
+<p><a href="../../images/Reset/evil-winRM_%2B_user_flag.png"><img alt="evil-winrm user shell" src="../../images/Reset/evil-winRM_%2B_user_flag.png" /></a></p>
+<p>First flag: <code>user.txt</code>.
+But above all, the first anchor point in the environment. It is time to look up and observe the AD infrastructure as a whole.</p>
+<hr />
+<h3 id="6-active-directory-reconnaissance-with-bloodhound">6. Active Directory Reconnaissance with BloodHound</h3>
+<p>To analyze the Active Directory environment, we use <strong>BloodHound</strong>.
+This step is crucial to identify access relationships, implicit permissions, and misconfigurations.</p>
+<p>The steps:</p>
+<ul>
+<li>Launch <strong>Neo4j</strong></li>
+</ul>
+<pre class="codehilite"><code class="language-bash">neo4j console
+</code></pre>
+
+<ul>
+<li>Launch the BloodHound collector from the Imapcket suite</li>
+</ul>
+<p><a href="../../images/Reset/bloodhound_collector.png"><img alt="BloodHound Collect" src="../../images/Reset/bloodhound_collector.png" /> </a> </p>
+<ul>
+<li>Load the data into BloodHound and observe</li>
+</ul>
+<p><a href="../../images/Reset/import_bloodhound.png"><img alt="BloodHound import" src="../../images/Reset/import_bloodhound.png" /></a>  </p>
+<p>Questions to ask yourself here:
+- Who has access to what?
+- Which permissions can be abused?
+- Is there a path to higher privileges?</p>
+<hr />
+<h3 id="7-lateral-movement-via-as-rep-roasting">7. Lateral Movement via AS-REP Roasting</h3>
+<p>BloodHound allows identifying accounts vulnerable to <strong>AS-REP Roasting</strong>.</p>
+<p><a href="../../images/Reset/AS-REProast_users.png"><img alt="ASREProast" src="../../images/Reset/AS-REProast_users.png" /></a></p>
+<p>We identify <strong>three users</strong> who do not have pre-authentication enabled. This is an opportunity not to be missed.</p>
+<p>We retrieve the encrypted TGT tickets, then submit them to John the Ripper.</p>
+<p><a href="../../images/Reset/Get-NPUsers.png"><img alt="Get-NPUsers" src="../../images/Reset/Get-NPUsers.png" /></a></p>
+<p><a href="../../images/Reset/crack_hash2.png"><img alt="John2" src="../../images/Reset/crack_hash2.png" /></a></p>
+<p>A password is cracked.</p>
+<p><strong>Think:</strong> Why don’t these accounts have pre-authentication enabled? Is it negligence or a deliberate configuration?</p>
+<hr />
+<h3 id="8-privilege-abuse-via-reset-password">8. Privilege Abuse via Reset Password</h3>
+<p>By analyzing more deeply with BloodHound, we discover that the user whose password we just cracked has the right to reset the password of an account that, in turn, has the right to reset the password of another account, and so on.</p>
+<p><a href="../../images/Reset/kill_chain.png"><img alt="Reset path" src="../../images/Reset/kill_chain.png" /></a></p>
+<p>This is an escalation chain:<br />
+1. Reset the password of a first account<br />
+2. Use it to compromise another account<br />
+3. Repeat until you reach an interesting account</p>
+<hr />
+<h3 id="9-kerberos-delegation-constrained">9. Kerberos Delegation (Constrained)</h3>
+<p>The last obtained account has <strong>AllowedToDelegateTo</strong> delegation rights.<br />
+This is known as <strong>constrained Kerberos delegation</strong>, and it is particularly dangerous if misconfigured.</p>
+<p><a href="../../images/Reset/kerberos_delegations.png"><img alt="Delegation rights" src="../../images/Reset/kerberos_delegations.png" /></a></p>
+<p>With these rights, it is possible to forge a <strong>Service Ticket</strong> for the <code>cifs</code> service on behalf of <strong>Administrator</strong>.</p>
+<p><a href="../../images/Reset/getST.png"><img alt="ST impersonation" src="../../images/Reset/getST.png" /></a></p>
+<hr />
+<h3 id="10-access-to-the-administrator-account">10. Access to the Administrator Account</h3>
+<p>The ST is forged and exported as an environment variable.</p>
+<p>All that remains is to connect using <strong>wmiexec.py</strong> or an equivalent tool.</p>
+<p><a href="../../images/Reset/root.txt.png"><img alt="Administrator shell" src="../../images/Reset/root.txt.png" /></a></p>
+<p>We gain access to the machine with <strong>Domain Admin</strong> rights.<br />
+And we retrieve the final flag: <code>root.txt</code>.</p>
+<hr />
+<p>🎯 <strong>Final Thought:</strong><br />
+This machine clearly shows how <strong>several small combined weaknesses</strong> (AS-REP Roasting, poorly managed permissions, Kerberos delegation) can lead to a full domain compromise.</p>
+<p>Each step may not be critical on its own, but together, they pave the way to full escalation.</p>
+<hr />
+<h2 id="francais">Français</h2>
+<p><strong>Catégorie :</strong> Active Directory<br />
 <strong>Plateforme :</strong> TryHackMe<br />
 <strong>Objectif :</strong> Accéder à un compte Domain Admin sur une machine Windows en analysant l'infrastructure Active Directory, capturant des hash, identifiant les chemins d'attaque et exploitant les mauvaises configurations de délégation Kerberos.</p>
 <hr />
@@ -416,7 +575,7 @@
 - le domain : <code>thm.corp</code>
 - le FQDN de la machine: <code>HayStack.thm.corp</code></p>
 <hr />
-<h4 id="11-exegol-history">1.1 Exegol-history</h4>
+<h4 id="11-exegol-history_1">1.1 Exegol-history</h4>
 <p><code>exegol-history</code> est un mécanisme ou module souvent utilisé dans l’environnement Exegol, un conteneur Docker offensif conçu pour les pentesters et Red Teamers. Il permet, entre autres, de personnaliser la session de travail dans le conteneur, notamment via le chargement de variables d’environnement dès l’ouverture d’un terminal Exegol.</p>
 <p>L’intérêt principal est de pré-configurer automatiquement des variables sensibles ou utiles à chaque engagement, comme :</p>
 <pre class="codehilite"><code>TARGET : nom ou IP de la cible
@@ -623,91 +782,143 @@ Cette machine montre bien comment <strong>plusieurs petites faiblesses combinée
         
         
         
-        <a href="#1-scan-initial-avec-nmap"
+        <a href="#english"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
+            English
+        </a>
+        
+        
+        <a href="#1-initial-scan-with-nmap"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            1. Initial Scan with Nmap
+        </a>
+        
+        <a href="#2-dns-zone-transfer"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            2. DNS Zone Transfer
+        </a>
+        
+        <a href="#3-smb-enumeration"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            3. SMB Enumeration
+        </a>
+        
+        <a href="#4-ntlm-hash-capture-via-responder"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            4. NTLM Hash Capture via Responder
+        </a>
+        
+        <a href="#5-ntlm-hash-cracking-and-initial-access"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            5. NTLM Hash Cracking and Initial Access
+        </a>
+        
+        <a href="#6-active-directory-reconnaissance-with-bloodhound"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            6. Active Directory Reconnaissance with BloodHound
+        </a>
+        
+        <a href="#7-lateral-movement-via-as-rep-roasting"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            7. Lateral Movement via AS-REP Roasting
+        </a>
+        
+        <a href="#8-privilege-abuse-via-reset-password"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            8. Privilege Abuse via Reset Password
+        </a>
+        
+        <a href="#9-kerberos-delegation-constrained"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            9. Kerberos Delegation (Constrained)
+        </a>
+        
+        <a href="#10-access-to-the-administrator-account"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            10. Access to the Administrator Account
+        </a>
+        
+        
+
+        
+        <a href="#francais"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Français
+        </a>
+        
+        
+        <a href="#1-scan-initial-avec-nmap"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
             1. Scan initial avec Nmap
         </a>
         
-        
-        <a href="#11-exegol-history"
-            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="3">
-            1.1 Exegol-history
-        </a>
-        
-        
-
-        
         <a href="#2-transfert-de-zone-dns"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2">
+            data-active="false" data-depth="3">
             2. Transfert de zone DNS
         </a>
         
-
-        
         <a href="#3-enumeration-smb"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2">
+            data-active="false" data-depth="3">
             3. Énumération SMB
         </a>
         
-
-        
         <a href="#4-capture-de-hash-ntlm-via-responder"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2">
+            data-active="false" data-depth="3">
             4. Capture de hash NTLM via Responder
         </a>
         
-
-        
         <a href="#5-crackage-du-hash-ntlm-et-acces-initial"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2">
+            data-active="false" data-depth="3">
             5. Crackage du hash NTLM et accès initial
         </a>
         
-
-        
         <a href="#6-reconnaissance-active-directory-avec-bloodhound"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2">
+            data-active="false" data-depth="3">
             6. Reconnaissance Active Directory avec BloodHound
         </a>
         
-
-        
         <a href="#7-mouvement-lateral-via-as-rep-roasting"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2">
+            data-active="false" data-depth="3">
             7. Mouvement latéral via AS-REP Roasting
         </a>
         
-
-        
         <a href="#8-abus-de-privileges-via-reset-password"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2">
+            data-active="false" data-depth="3">
             8. Abus de privilèges via Reset Password
         </a>
         
-
-        
         <a href="#9-delegation-kerberos-contrainte"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2">
+            data-active="false" data-depth="3">
             9. Délégation Kerberos (contrainte)
         </a>
         
-
-        
         <a href="#10-acces-au-compte-administrator"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2">
+            data-active="false" data-depth="3">
             10. Accès au compte Administrator
         </a>
+        
         
 
         
