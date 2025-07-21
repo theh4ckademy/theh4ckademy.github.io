@@ -1,4 +1,229 @@
-# **Reset**
+
+[🇫🇷 Version française](#francais) | [🇬🇧 English version](#english)
+
+## English
+
+**Category:** Active Directory
+**Platform:** TryHackMe
+**Objective:** Gain access to a Domain Admin account on a Windows machine by analyzing the Active Directory infrastructure, capturing hashes, identifying attack paths, and exploiting misconfigured Kerberos delegation.
+
+---
+
+### 1. Initial Scan with Nmap
+
+As always, we start with basic mapping. What services are running on this machine? Which ports are exposed? We run a full scan with Nmap:
+
+```bash
+nmap -sC -sV -Pn -T4 -p- "\$TARGET"
+```
+
+[![Nmap output](../images/Reset/nmap.png)](../images/Reset/nmap.png)
+
+A few points to note here:
+
+| Point | Description |
+|-------|-------------|
+| Port **53 (DNS)** is open | Is a zone transfer possible? |
+| Port **88 (Kerberos)** is accessible | Could there be users vulnerable to **AS-REP Roasting**? |
+| Ports **135 / 139 / 445 (RPC / SMB)** | Could give us access to shares |
+| **RDP (3389)** and **WinRM (5985)** | Require credentials but become very useful once we have a foothold in the domain |
+
+Note that the Nmap scan allowed us to leak:
+- The domain: `thm.corp`
+- The FQDN of the machine: `HayStack.thm.corp`
+
+---
+
+#### 1.1 Exegol-history
+
+`exegol-history` is a mechanism or module often used in the Exegol environment, an offensive Docker container designed for pentesters and Red Teamers. It allows, among other things, customization of the working session in the container, particularly through the loading of environment variables as soon as an Exegol terminal is opened.
+
+The main benefit is the automatic pre-configuration of sensitive or useful variables for each engagement, such as:
+- TARGET: name or IP of the target
+- DOMAIN: Active Directory domain under attack
+- USERNAME: account compromised during the pentest
+- PASSWORD: password of the associated account
+- ...
+
+[![Exegol-history](../images/Reset/exegol_history.png)](../images/Reset/exegol_history.png)
+
+This avoids having to retype them each time, allows their use in scripts or tools (NetExec, Impacket, etc.), and standardizes the environment from one operator to another.
+
+
+---
+
+### 2. DNS Zone Transfer
+
+First reflex in the presence of DNS: test a **zone transfer**.
+
+
+[![DNS Zone Transfer](../images/Reset/dns_zone_transfer.png)](../images/Reset/dns_zone_transfer.png)
+
+Unfortunately, the operation fails.
+
+
+
+---
+
+### 3. SMB Enumeration
+
+Let's move on to the SMB ports. We use **enum4linux** to extract as much information as possible about the domain and shares.
+
+
+[![Enum4linux](../images/Reset/enum4linux.png)](../images/Reset/enum4linux.png)
+[![Shares Enum4linux](../images/Reset/shares_enum4linux.png)](../images/Reset/shares_enum4linux.png)
+A share named **Data** is accessible.
+We confirm the presence and restrictions of this share with smbmap.
+[![SMB shares](../images/Reset/smbmap.png)](../images/Reset/smbmap.png)
+
+A connection via `smbclient` allows browsing its contents.
+
+[![smbclient](../images/Reset/smb_shares.png)](../images/Reset/smb_shares.png)
+
+Strange thing: the file names change regularly. This suggests an automatic process in the background. Maybe a **service account**?
+
+[![Filename changed](../images/Reset/changement_nom_fichiers.png)](../images/Reset/changement_nom_fichiers.png)
+
+This behavior deserves to be provoked... and taken advantage of.
+
+---
+
+### 4. NTLM Hash Capture via Responder
+
+The goal here is to capture an **NTLM hash** via an **SMB relay/capture** attack.
+
+- We generate trapped files with **ntlm_theft** (various extensions)
+
+[![nthlm_theft](../images/Reset/ntlm_theft.png)](../images/Reset/ntlm_theft.png)
+[![files](../images/Reset/genrate_file_ntlm_theft.png)](../images/Reset/genrate_file_ntlm_theft.png)
+
+- We upload them to the share
+
+[![upload_files](../images/Reset/upload_file.png)](../images/Reset/upload_file.png) 
+
+- We launch **Responder** in listening mode
+
+[![responder](../images/Reset/responder.png)](../images/Reset/responder.png) 
+
+When a service (such as an automated account) interacts with these files, it sends its credentials in NTLM format.
+
+[![Responder capture](../images/Reset/get_nt_hash.png)](../images/Reset/get_nt_hash.png)
+
+At this stage, ask yourself the question: why is this service interacting with my files ? What role does it play in the AD environment ?
+
+---
+
+### 5. NTLM Hash Cracking and Initial Access
+
+Once the hash is retrieved, head to **John the Ripper** to brute force it.
+
+[![John cracking](../images/Reset/crack_hash1.png)](../images/Reset/crack_hash1.png)
+
+Once the password is discovered, an **Evil-WinRM** session allows connecting to the machine.
+
+[![evil-winrm user shell](../images/Reset/evil-winRM_+_user_flag.png)](../images/Reset/evil-winRM_+_user_flag.png)
+
+First flag: `user.txt`.
+But above all, the first anchor point in the environment. It is time to look up and observe the AD infrastructure as a whole.
+
+---
+
+### 6. Active Directory Reconnaissance with BloodHound
+
+To analyze the Active Directory environment, we use **BloodHound**.
+This step is crucial to identify access relationships, implicit permissions, and misconfigurations.
+
+The steps:
+
+- Launch **Neo4j**
+
+```bash
+neo4j console
+```
+
+- Launch the BloodHound collector from the Imapcket suite
+
+[![BloodHound Collect](../images/Reset/bloodhound_collector.png) ](../images/Reset/bloodhound_collector.png) 
+
+- Load the data into BloodHound and observe
+  
+[![BloodHound import](../images/Reset/import_bloodhound.png)](../images/Reset/import_bloodhound.png)  
+
+Questions to ask yourself here:
+- Who has access to what?
+- Which permissions can be abused?
+- Is there a path to higher privileges?
+
+---
+
+### 7. Lateral Movement via AS-REP Roasting
+
+BloodHound allows identifying accounts vulnerable to **AS-REP Roasting**.
+
+[![ASREProast](../images/Reset/AS-REProast_users.png)](../images/Reset/AS-REProast_users.png)
+
+We identify **three users** who do not have pre-authentication enabled. This is an opportunity not to be missed.
+
+We retrieve the encrypted TGT tickets, then submit them to John the Ripper.
+
+[![Get-NPUsers](../images/Reset/Get-NPUsers.png)](../images/Reset/Get-NPUsers.png)
+
+
+[![John2](../images/Reset/crack_hash2.png)](../images/Reset/crack_hash2.png)
+
+A password is cracked.
+
+**Think:** Why don’t these accounts have pre-authentication enabled? Is it negligence or a deliberate configuration?
+
+---
+
+### 8. Privilege Abuse via Reset Password
+
+By analyzing more deeply with BloodHound, we discover that the user whose password we just cracked has the right to reset the password of an account that, in turn, has the right to reset the password of another account, and so on.
+
+[![Reset path](../images/Reset/kill_chain.png)](../images/Reset/kill_chain.png)
+
+This is an escalation chain:  
+1. Reset the password of a first account  
+2. Use it to compromise another account  
+3. Repeat until you reach an interesting account
+
+---
+
+### 9. Kerberos Delegation (Constrained)
+
+The last obtained account has **AllowedToDelegateTo** delegation rights.  
+This is known as **constrained Kerberos delegation**, and it is particularly dangerous if misconfigured.
+
+[![Delegation rights](../images/Reset/kerberos_delegations.png)](../images/Reset/kerberos_delegations.png)
+
+With these rights, it is possible to forge a **Service Ticket** for the `cifs` service on behalf of **Administrator**.
+
+[![ST impersonation](../images/Reset/getST.png)](../images/Reset/getST.png)
+
+---
+
+### 10. Access to the Administrator Account
+
+The ST is forged and exported as an environment variable.
+
+All that remains is to connect using **wmiexec.py** or an equivalent tool.
+
+[![Administrator shell](../images/Reset/root.txt.png)](../images/Reset/root.txt.png)
+
+We gain access to the machine with **Domain Admin** rights.  
+And we retrieve the final flag: `root.txt`.
+
+---
+
+🎯 **Final Thought:**  
+This machine clearly shows how **several small combined weaknesses** (AS-REP Roasting, poorly managed permissions, Kerberos delegation) can lead to a full domain compromise.
+
+Each step may not be critical on its own, but together, they pave the way to full escalation.
+
+---
+
+## Français
 
 **Catégorie :** Active Directory  
 **Plateforme :** TryHackMe  

@@ -54,7 +54,7 @@ Example:
 
 Developed and maintained by **Anthony KOUROGHLI (anthkrg)** and **Bastien LEJARS (pudwill)**  
 📫 Contact: [theh4ckademy@gmail.com]  
-🔗 [GitHub - TheH4ckademy](https://github.com/theh4ckademy)
+🔗 [GitHub - TheH4ckademy](https://github.com/theh4ckademy/theh4ckademy.github.io)
 
 ---
 
@@ -124,7 +124,7 @@ Exemple :
 
 Développé et maintenu par **Anthony KOUROGHLI (anthkrg)** et **Bastien LEJARS (pudwill)**  
 📫 Contact : [theh4ckademy@gmail.com]  
-🔗 [GitHub - TheH4ckademy](https://github.com/theh4ckademy)
+🔗 [GitHub - TheH4ckademy](https://github.com/theh4ckademy/theh4ckademy.github.io)
 
 ---
 
