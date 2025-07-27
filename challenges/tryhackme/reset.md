@@ -2,13 +2,13 @@
 
 [🇫🇷 Version française](reset.md#francais) | [🇬🇧 English version](reset.md#english)
 
-### English
+## English
 
 **Category:** Active Directory **Platform:** TryHackMe **Objective:** Gain access to a Domain Admin account on a Windows machine by analyzing the Active Directory infrastructure, capturing hashes, identifying attack paths, and exploiting misconfigured Kerberos delegation.
 
 ***
 
-#### 1. Initial Scan with Nmap
+### 1. Initial Scan with Nmap
 
 As always, we start with basic mapping. What services are running on this machine? Which ports are exposed? We run a full scan with Nmap:
 
@@ -34,7 +34,7 @@ Note that the Nmap scan allowed us to leak:
 
 ***
 
-**1.1 Exegol-history**
+#### **1.1 Exegol-history**
 
 `exegol-history` is a mechanism or module often used in the Exegol environment, an offensive Docker container designed for pentesters and Red Teamers. It allows, among other things, customization of the working session in the container, particularly through the loading of environment variables as soon as an Exegol terminal is opened.
 
@@ -52,7 +52,7 @@ This avoids having to retype them each time, allows their use in scripts or tool
 
 ***
 
-#### 2. DNS Zone Transfer
+### 2. DNS Zone Transfer
 
 First reflex in the presence of DNS: test a **zone transfer**.
 
@@ -62,7 +62,7 @@ Unfortunately, the operation fails.
 
 ***
 
-#### 3. SMB Enumeration
+### 3. SMB Enumeration
 
 Let's move on to the SMB ports. We use **enum4linux** to extract as much information as possible about the domain and shares.
 
@@ -90,7 +90,7 @@ This behavior deserves to be provoked... and taken advantage of.
 
 ***
 
-#### 4. NTLM Hash Capture via Responder
+### 4. NTLM Hash Capture via Responder
 
 The goal here is to capture an **NTLM hash** via an **SMB relay/capture** attack.
 
@@ -114,7 +114,7 @@ At this stage, ask yourself the question: why is this service interacting with m
 
 ***
 
-#### 5. NTLM Hash Cracking and Initial Access
+### 5. NTLM Hash Cracking and Initial Access
 
 Once the hash is retrieved, head to **John the Ripper** to brute force it.
 
@@ -128,7 +128,7 @@ First flag: `user.txt`. But above all, the first anchor point in the environment
 
 ***
 
-#### 6. Active Directory Reconnaissance with BloodHound
+### 6. Active Directory Reconnaissance with BloodHound
 
 To analyze the Active Directory environment, we use **BloodHound**. This step is crucial to identify access relationships, implicit permissions, and misconfigurations.
 
@@ -156,7 +156,7 @@ Questions to ask yourself here:
 
 ***
 
-#### 7. Lateral Movement via AS-REP Roasting
+### 7. Lateral Movement via AS-REP Roasting
 
 BloodHound allows identifying accounts vulnerable to **AS-REP Roasting**.
 
@@ -176,7 +176,7 @@ A password is cracked.
 
 ***
 
-#### 8. Privilege Abuse via Reset Password
+### 8. Privilege Abuse via Reset Password
 
 By analyzing more deeply with BloodHound, we discover that the user whose password we just cracked has the right to reset the password of an account that, in turn, has the right to reset the password of another account, and so on.
 
@@ -190,7 +190,7 @@ This is an escalation chain:
 
 ***
 
-#### 9. Kerberos Delegation (Constrained)
+### 9. Kerberos Delegation (Constrained)
 
 The last obtained account has **AllowedToDelegateTo** delegation rights.\
 This is known as **constrained Kerberos delegation**, and it is particularly dangerous if misconfigured.
@@ -203,7 +203,7 @@ With these rights, it is possible to forge a **Service Ticket** for the `cifs` s
 
 ***
 
-#### 10. Access to the Administrator Account
+### 10. Access to the Administrator Account
 
 The ST is forged and exported as an environment variable.
 
@@ -223,7 +223,7 @@ Each step may not be critical on its own, but together, they pave the way to ful
 
 ***
 
-### Français
+## Français
 
 **Catégorie :** Active Directory\
 **Plateforme :** TryHackMe\
@@ -231,7 +231,7 @@ Each step may not be critical on its own, but together, they pave the way to ful
 
 ***
 
-#### 1. Scan initial avec Nmap
+### 1. Scan initial avec Nmap
 
 Comme toujours, on commence par une cartographie de base. Quels services tournent sur cette machine ? Quels ports sont exposés ? On exécute un scan complet avec Nmap :
 
@@ -255,7 +255,7 @@ A noter que le scan nmap nous a permis de fuiter:
 
 ***
 
-**1.1 Exegol-history**
+#### **1.1 Exegol-history**
 
 `exegol-history` est un mécanisme ou module souvent utilisé dans l’environnement Exegol, un conteneur Docker offensif conçu pour les pentesters et Red Teamers. Il permet, entre autres, de personnaliser la session de travail dans le conteneur, notamment via le chargement de variables d’environnement dès l’ouverture d’un terminal Exegol.
 
@@ -279,7 +279,7 @@ Cela évite de devoir les retaper à chaque fois, permet de les utiliser dans de
 
 ***
 
-#### 2. Transfert de zone DNS
+### 2. Transfert de zone DNS
 
 Premier réflexe en présence de DNS : tester un **zone transfer**.
 
@@ -289,7 +289,7 @@ Malheureusement, l’opération échoue.
 
 ***
 
-#### 3. Énumération SMB
+### 3. Énumération SMB
 
 Passons aux ports SMB. On utilise **enum4linux** pour extraire un maximum d’informations sur le domaine et les partages.
 
@@ -316,7 +316,7 @@ Ce comportement mérite qu'on le provoque... et qu'on en profite.
 
 ***
 
-#### 4. Capture de hash NTLM via Responder
+### 4. Capture de hash NTLM via Responder
 
 L’objectif ici est de capturer un **hash NTLM** via une attaque de type **SMB relay / capture**.
 
@@ -340,7 +340,7 @@ Quand un service (comme un compte automatisé) interagit avec ces fichiers, il e
 
 ***
 
-#### 5. Crackage du hash NTLM et accès initial
+### 5. Crackage du hash NTLM et accès initial
 
 Une fois le hash récupéré, direction **John the Ripper** pour le bruteforce.
 
@@ -355,7 +355,7 @@ Mais surtout, premier point d’ancrage dans l’environnement. Il est temps de 
 
 ***
 
-#### 6. Reconnaissance Active Directory avec BloodHound
+### 6. Reconnaissance Active Directory avec BloodHound
 
 Pour analyser l’environnement Active Directory, on utilise **BloodHound**.\
 Cette étape est cruciale pour identifier les relations d’accès, les permissions implicites et les mauvaises configurations.
@@ -384,7 +384,7 @@ Questions à se poser ici :
 
 ***
 
-#### 7. Mouvement latéral via AS-REP Roasting
+### 7. Mouvement latéral via AS-REP Roasting
 
 BloodHound permet d'identifier les comptes vulnérables à **AS-REP Roasting**.
 
@@ -404,7 +404,7 @@ Un mot de passe tombe.
 
 ***
 
-#### 8. Abus de privilèges via Reset Password
+### 8. Abus de privilèges via Reset Password
 
 En analysant plus profondément avec BloodHound, on découvre que l'utilisateur dont on vient de cracker le mot de passe a le droit de réinitialiser le mot de passe d'un compte qui a son toura le droit de réinitialiser le mot de passe d'un compte, etc.
 
@@ -418,7 +418,7 @@ C’est une chaîne d’escalade :
 
 ***
 
-#### 9. Délégation Kerberos (contrainte)
+### 9. Délégation Kerberos (contrainte)
 
 Le dernier compte obtenu possède des droits de délégation **AllowedToDelegateTo**.\
 C’est ce qu’on appelle de la **délégation Kerberos contrainte**, et c’est particulièrement dangereux si mal configuré.
@@ -431,7 +431,7 @@ Avec ces droits, il est possible de forger un **Service Ticket** pour le service
 
 ***
 
-#### 10. Accès au compte Administrator
+### 10. Accès au compte Administrator
 
 Le ST est forgé et exporté comme variable d’environnement.
 
