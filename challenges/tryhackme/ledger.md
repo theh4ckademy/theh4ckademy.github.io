@@ -18,7 +18,7 @@ Before jumping into the flashy tools, we keep it classic: a good old Nmap scan t
 nmap -sC -sV -Pn -T4 -p- <IP>
 ```
 
-[![Nmap output](/images/Ledger/nmap_output.png)](/images/Ledger/nmap_output.png)
+<p align="center"><a href="../../images/Ledger/nmap_output.png"><img src="../../images/Ledger/nmap_output.png" alt="Nmap output" data-size="original"></a></p>
 
 ***
 
@@ -40,7 +40,7 @@ PASSWORD : associated account password
 ...
 ```
 
-[![Exegol-history](/images/Reset/exegol_history.png)](/images/Reset/exegol_history.png)
+<p align="center"><a href="../../images/Reset/exegol_history.png"><img src="../../images/Reset/exegol_history.png" alt="Exegol-history"></a></p>
 
 This avoids retyping them each time, allows use in scripts/tools (NetExec, Impacket, etc.), and standardizes environments across operators.
 
@@ -71,7 +71,7 @@ We leak:
 
 A little zone transfer test — often overlooked but sometimes quite revealing:
 
-[![DNS Zone Transfer](/images/Ledger/dig.png)](/images/Ledger/dig.png)
+<p align="center"><a href="../../images/Ledger/dig.png"><img src="../../images/Ledger/dig.png" alt="DNS Zone Transfer"></a></p>
 
 ❌ Failed.
 
@@ -83,13 +83,13 @@ No worries, let’s hunt for intel elsewhere.
 
 We head to port 80 (HTTP) then 443 (HTTPS). The site shows a default IIS landing page.
 
-[![Web Server](/images/Ledger/IIS.png)](/images/Ledger/IIS.png)
+<p align="center"><a href="../../images/Ledger/IIS.png"><img src="../../images/Ledger/IIS.png" alt="Web Server"></a></p>
 
 ***
 
 #### 4. SMB/RPC – Juicy shares?
 
-[![enum4linux](/images/Ledger/enum4linux.png)](/images/Ledger/enum4linux.png)
+<p align="center"><a href="../../images/Ledger/enum4linux.png"><img src="../../images/Ledger/enum4linux.png" alt="enum4linux"></a></p>
 
 ❌ Nothing useful. Looks like authentication is required to get anything valuable. Let’s revisit later.
 
@@ -97,19 +97,19 @@ We head to port 80 (HTTP) then 443 (HTTPS). The site shows a default IIS landing
 
 #### 5. LDAP – The Rare Gem?
 
-[![ldapsearch](/images/Ledger/ldapsearch.png)](/images/Ledger/ldapsearch.png)
+<p align="center"><a href="../../images/Ledger/ldapsearch.png"><img src="../../images/Ledger/ldapsearch.png" alt="ldapsearch"></a></p>
 
 We grep the output with `description`
 
-[![ldapsearch](/images/Ledger/ldapdump.png)](/images/Ledger/ldapdump.png)
+<p align="center"><a href="../../images/Ledger/ldapdump.png"><img src="../../images/Ledger/ldapdump.png" alt="ldapsearch"></a></p>
 
 Then, scrolling down a bit, we notice:
 
-[![ldapsearch](/images/Ledger/ldapdump_description.png)](/images/Ledger/ldapdump_description.png)
+<p align="center"><a href="../../images/Ledger/ldapdump_description.png"><img src="../../images/Ledger/ldapdump_description.png" alt="ldapsearch"></a></p>
 
 We extract the users associated with this default password
 
-[![ldapsearch](/images/Ledger/ldapdump_users.png)](/images/Ledger/ldapdump_users.png)
+<p align="center"><a href="../../images/Ledger/ldapdump_users.png"><img src="../../images/Ledger/ldapdump_users.png" alt="ldapsearch"></a></p>
 
 💥 Bingo! Two users appear with the same default password:
 
@@ -123,17 +123,17 @@ SUSANNA\_MCKNIGHT
 
 We test the possibility that the users found previously can connect via RDP:
 
-[![nxc](/images/Ledger/nxc_fail.png)](/images/Ledger/nxc_fail.png)
+<p align="center"><a href="../../images/Ledger/nxc_fail.png"><img src="../../images/Ledger/nxc_fail.png" alt="nxc"></a></p>
 
-[![nxc](/images/Ledger/nxc_success.png)](/images/Ledger/nxc_success.png)
+<p align="center"><a href="../../images/Ledger/nxc_success.png"><img src="../../images/Ledger/nxc_success.png" alt="nxc"></a></p>
 
 Then we connect with the user who can establish an RDP session with the machine
 
-[![xfreerdp](/images/Ledger/rdp.png)](/images/Ledger/rdp.png)
+<p align="center"><a href="../../images/Ledger/rdp.png"><img src="../../images/Ledger/rdp.png" alt="xfreerdp"></a></p>
 
 We retrieve the `user.txt` flag
 
-[![user.txt](/images/Ledger/user_txt.png)](/images/Ledger/user_txt.png)
+<p align="center"><a href="../../images/Ledger/user_txt.png"><img src="../../images/Ledger/user_txt.png" alt="user.txt"></a></p>
 
 ***
 
@@ -141,7 +141,7 @@ We retrieve the `user.txt` flag
 
 We explore the groups to which Susanna belongs and... oh:
 
-[![Groups](/images/Ledger/group.png)](/images/Ledger/group.png)
+<p align="center"><a href="../../images/Ledger/group.png"><img src="../../images/Ledger/group.png" alt="Groups"></a></p>
 
 `Certificate Service DCOM Access`
 
@@ -149,17 +149,17 @@ We explore the groups to which Susanna belongs and... oh:
 
 Using Certipy, a powerful tool for this universe:
 
-[![Certify\_find](/images/Ledger/certipy_find.png)](/images/Ledger/certipy_find.png)
+<p align="center"><a href="../../images/Ledger/certipy_find.png"><img src="../../images/Ledger/certipy_find.png" alt="Certify_find"></a></p>
 
-[![Template](/images/Ledger/template_vuln.png)](/images/Ledger/template_vuln.png)
+<p align="center"><a href="../../images/Ledger/template_vuln.png"><img src="../../images/Ledger/template_vuln.png" alt="Template"></a></p>
 
 A vulnerable template is discovered! We then attempt:
 
-[![Certipy\_req](/images/Ledger/certipy_req.png)](/images/Ledger/certipy_req.png)
+<p align="center"><a href="../../images/Ledger/certipy_req.png"><img src="../../images/Ledger/certipy_req.png" alt="Certipy_req"></a></p>
 
 We obtain a certificate that allows us to authenticate as Administrator 😈
 
-[![tgt](/images/Ledger/certipy_auth.png)](/images/Ledger/certipy_auth.png)
+<p align="center"><a href="../../images/Ledger/certipy_auth.png"><img src="../../images/Ledger/certipy_auth.png" alt="tgt"></a></p>
 
 And there we have an Administrator TGT. The key to the kingdom.
 
@@ -169,7 +169,7 @@ And there we have an Administrator TGT. The key to the kingdom.
 
 With a valid TGT, a wmiexec.py from Impacket gives us a direct shell as admin:
 
-[![root.txt](/images/Ledger/root.txt.png)](/images/Ledger/root.txt.png)
+<p align="center"><a href="../../images/Ledger/root.txt.png"><img src="../../images/Ledger/root.txt.png" alt="root.txt"></a></p>
 
 And the Grail awaits us!
 
@@ -203,7 +203,7 @@ Avant de sauter sur les outils les plus sexy, on reste sobre : un bon vieux scan
 nmap -sC -sV -Pn -T4 -p- <IP>
 ```
 
-[![Nmap output](/images/Ledger/nmap_output.png)](/images/Ledger/nmap_output.png)
+<p align="center"><a href="../../images/Ledger/nmap_output.png"><img src="../../images/Ledger/nmap_output.png" alt="Nmap output"></a></p>
 
 ***
 
@@ -225,7 +225,7 @@ PASSWORD : mot de passe du compte associé
 ... 
 ```
 
-[![Exegol-history](/images/Reset/exegol_history.png)](/images/Reset/exegol_history.png)
+<p align="center"><a href="../../images/Reset/exegol_history.png"><img src="../../images/Reset/exegol_history.png" alt="Exegol-history"></a></p>
 
 Cela évite de devoir les retaper à chaque fois, permet de les utiliser dans des scripts ou des outils (NetExec, Impacket, etc.), et standardise l’environnement d’un opérateur à l’autre.
 
@@ -256,7 +256,7 @@ On fuite:
 
 Un petit test de zone transfer, souvent négligé mais parfois très parlant :
 
-[![DNS Zone Transfer](/images/Ledger/dig.png)](/images/Ledger/dig.png)
+<p align="center"><a href="../../images/Ledger/dig.png"><img src="../../images/Ledger/dig.png" alt="DNS Zone Transfer" data-size="original"></a></p>
 
 ❌ Échec.
 
@@ -268,13 +268,13 @@ Pas grave, on poursuit notre chasse aux infos ailleurs.
 
 Direction le port 80 (HTTP) puis 443 (HTTPS). L’accès renvoie une page par défaut IIS.
 
-[![Web Server](/images/Ledger/IIS.png)](/images/Ledger/IIS.png)
+<p align="center"><a href="../../images/Ledger/IIS.png"><img src="../../images/Ledger/IIS.png" alt="Web Server"></a></p>
 
 ***
 
 #### 4. SMB/RPC – Partages juteux ?
 
-[![enum4linux](/images/Ledger/enum4linux.png)](/images/Ledger/enum4linux.png)
+<p align="center"><a href="../../images/Ledger/enum4linux.png"><img src="../../images/Ledger/enum4linux.png" alt="enum4linux"></a></p>
 
 ❌ Rien d’exploitable. On dirait qu’il faut être authentifié pour obtenir quelque chose. Revenons plus tard.
 
@@ -282,19 +282,19 @@ Direction le port 80 (HTTP) puis 443 (HTTPS). L’accès renvoie une page par d�
 
 #### 5. LDAP – La perle rare ?
 
-[![ldapsearch](/images/Ledger/ldapsearch.png)](/images/Ledger/ldapsearch.png)
+<p align="center"><a href="../../images/Ledger/ldapsearch.png"><img src="../../images/Ledger/ldapsearch.png" alt="ldapsearch"></a></p>
 
 On grep l'output avec `description`
 
-[![ldapsearch](/images/Ledger/ldapdump.png)](/images/Ledger/ldapdump.png)
+<p align="center"><a href="../../images/Ledger/ldapdump.png"><img src="../../images/Ledger/ldapdump.png" alt="ldapsearch"></a></p>
 
 Puis en descendant un peu on remarque:
 
-[![ldapsearch](/images/Ledger/ldapdump_description.png)](/images/Ledger/ldapdump_description.png)
+<p align="center"><a href="../../images/Ledger/ldapdump_description.png"><img src="../../images/Ledger/ldapdump_description.png" alt="ldapsearch"></a></p>
 
 On extrait les users associés à ce mot de passe par défaut
 
-[![ldapsearch](/images/Ledger/ldapdump_users.png)](/images/Ledger/ldapdump_users.png)
+<p align="center"><a href="../../images/Ledger/ldapdump_users.png"><img src="../../images/Ledger/ldapdump_users.png" alt="ldapsearch"></a></p>
 
 💥 Bingo ! Deux utilisateurs apparaissent avec le même mot de passe par défaut:
 
@@ -310,17 +310,17 @@ SUSANNA_MCKNIGHT
 
 On teste la possibilité que les users trouvé précédemment puissent se connecter en RDP:
 
-[![nxc](/images/Ledger/nxc_fail.png)](/images/Ledger/nxc_fail.png)
+<p align="center"><a href="../../images/Ledger/nxc_fail.png"><img src="../../images/Ledger/nxc_fail.png" alt="nxc"></a></p>
 
-[![nxc](/images/Ledger/nxc_success.png)](/images/Ledger/nxc_success.png)
+<p align="center"><a href="../../images/Ledger/nxc_success.png"><img src="../../images/Ledger/nxc_success.png" alt="nxc"></a></p>
 
 Puis on se connecte avec le user qui peut établir une session RDP avec la machine
 
-[![xfreerdp](/images/Ledger/rdp.png)](/images/Ledger/rdp.png)
+<p align="center"><a href="../../images/Ledger/rdp.png"><img src="../../images/Ledger/rdp.png" alt="xfreerdp"></a></p>
 
 On récupère le flag `user.txt`
 
-[![user.txt](/images/Ledger/user_txt.png)](/images/Ledger/user_txt.png)
+<p align="center"><a href="../../images/Ledger/user_txt.png"><img src="../../images/Ledger/user_txt.png" alt="user.txt"></a></p>
 
 ***
 
@@ -328,7 +328,7 @@ On récupère le flag `user.txt`
 
 On explore les groupes auxquels Susanna appartient et… oh :
 
-[![Groups](/images/Ledger/group.png)](/images/Ledger/group.png)
+<p align="center"><a href="../../images/Ledger/group.png"><img src="../../images/Ledger/group.png" alt="Groups"></a></p>
 
 `Certificate Service DCOM Access`
 
@@ -336,17 +336,17 @@ On explore les groupes auxquels Susanna appartient et… oh :
 
 Utilisation de Certipy, un outil redoutable pour cet univers :
 
-[![Certify\_find](/images/Ledger/certipy_find.png)](/images/Ledger/certipy_find.png)
+<p align="center"><a href="../../images/Ledger/certipy_find.png"><img src="../../images/Ledger/certipy_find.png" alt="Certify_find"></a></p>
 
-[![Template](/images/Ledger/template_vuln.png)](/images/Ledger/template_vuln.png)
+<p align="center"><a href="../../images/Ledger/template_vuln.png"><img src="../../images/Ledger/template_vuln.png" alt="Template"></a></p>
 
 Un template vulnérable est découvert ! On tente alors :
 
-[![Certipy\_req](/images/Ledger/certipy_req.png)](/images/Ledger/certipy_req.png)
+<p align="center"><a href="../../images/Ledger/certipy_req.png"><img src="../../images/Ledger/certipy_req.png" alt="Certipy_req"></a></p>
 
 On obtient un certificat qui permet de s’authentifier comme Administrator 😈
 
-[![tgt](/images/Ledger/certipy_auth.png)](/images/Ledger/certipy_auth.png)
+<p align="center"><a href="../../images/Ledger/certipy_auth.png"><img src="../../images/Ledger/certipy_auth.png" alt="tgt"></a></p>
 
 Et voilà un TGT Administrator en poche. La clé du royaume.
 
@@ -356,7 +356,7 @@ Et voilà un TGT Administrator en poche. La clé du royaume.
 
 Avec un TGT valide, un wmiexec.py de Impacket nous donne un shell direct en tant qu’admin :
 
-[![root.txt](/images/Ledger/root.txt.png)](/images/Ledger/root.txt.png)
+<p align="center"><a href="../../images/Ledger/root.txt.png"><img src="../../images/Ledger/root.txt.png" alt="root.txt"></a></p>
 
 Et le Graal nous attend !
 
