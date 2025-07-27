@@ -13,7 +13,7 @@
 As always, we start with basic mapping. What services are running on this machine? Which ports are exposed? We run a full scan with Nmap:
 
 ```bash
-nmap -sC -sV -Pn -T4 -p- "\$TARGET"
+nmap -sC -sV -Pn -T4 -p- "$TARGET"
 ```
 
 <p align="center"><a href="../../images/Reset/nmap.png"><img src="../../images/Reset/nmap.png" alt="Nmap output"></a></p>
