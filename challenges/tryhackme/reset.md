@@ -46,7 +46,7 @@ The main benefit is the automatic pre-configuration of sensitive or useful varia
 * PASSWORD: password of the associated account
 * ...
 
-[![Exegol-history](../../images/Reset/exegol_history.png)](../../images/Reset/exegol_history.png)
+<p align="center"><a href="../../images/Reset/exegol_history.png"><img src="../../images/Reset/exegol_history.png" alt="Exegol-history"></a></p>
 
 This avoids having to retype them each time, allows their use in scripts or tools (NetExec, Impacket, etc.), and standardizes the environment from one operator to another.
 
@@ -56,7 +56,7 @@ This avoids having to retype them each time, allows their use in scripts or tool
 
 First reflex in the presence of DNS: test a **zone transfer**.
 
-[![DNS Zone Transfer](../../images/Reset/dns_zone_transfer.png)](../../images/Reset/dns_zone_transfer.png)
+<p align="center"><a href="../../images/Reset/dns_zone_transfer.png"><img src="../../images/Reset/dns_zone_transfer.png" alt="DNS Zone Transfer"></a></p>
 
 Unfortunately, the operation fails.
 
@@ -68,7 +68,7 @@ Let's move on to the SMB ports. We use **enum4linux** to extract as much informa
 
 
 
-[![Enum4linux](../../images/Reset/enum4linux.png)](../../images/Reset/enum4linux.png) [![Shares Enum4linux](../../images/Reset/shares_enum4linux.png)](../../images/Reset/shares_enum4linux.png)&#x20;
+<p align="center"><a href="../../images/Reset/enum4linux.png"><img src="../../images/Reset/enum4linux.png" alt="Enum4linux"></a> <a href="../../images/Reset/shares_enum4linux.png"><img src="../../images/Reset/shares_enum4linux.png" alt="Shares Enum4linux"></a> </p>
 
 
 
@@ -76,15 +76,15 @@ A share named **Data** is accessible. We confirm the presence and restrictions o
 
 
 
-&#x20;[![SMB shares](../../images/Reset/smbmap.png)](../../images/Reset/smbmap.png)
+<p align="center"> <a href="../../images/Reset/smbmap.png"><img src="../../images/Reset/smbmap.png" alt="SMB shares"></a></p>
 
 A connection via `smbclient` allows browsing its contents.
 
-[![smbclient](../../images/Reset/smb_shares.png)](../../images/Reset/smb_shares.png)
+<p align="center"><a href="../../images/Reset/smb_shares.png"><img src="../../images/Reset/smb_shares.png" alt="smbclient"></a></p>
 
 Strange thing: the file names change regularly. This suggests an automatic process in the background. Maybe a **service account**?
 
-[![Filename changed](../../images/Reset/changement_nom_fichiers.png)](../../images/Reset/changement_nom_fichiers.png)
+<p align="center"><a href="../../images/Reset/changement_nom_fichiers.png"><img src="../../images/Reset/changement_nom_fichiers.png" alt="Filename changed"></a></p>
 
 This behavior deserves to be provoked... and taken advantage of.
 
@@ -96,19 +96,19 @@ The goal here is to capture an **NTLM hash** via an **SMB relay/capture** attack
 
 * We generate trapped files with **ntlm\_theft** (various extensions)
 
-[![nthlm\_theft](../../images/Reset/ntlm_theft.png)](../../images/Reset/ntlm_theft.png) [![files](../../images/Reset/genrate_file_ntlm_theft.png)](../../images/Reset/genrate_file_ntlm_theft.png)
+<p align="center"><a href="../../images/Reset/ntlm_theft.png"><img src="../../images/Reset/ntlm_theft.png" alt="nthlm_theft"></a> <a href="../../images/Reset/genrate_file_ntlm_theft.png"><img src="../../images/Reset/genrate_file_ntlm_theft.png" alt="files"></a></p>
 
 * We upload them to the share
 
-[![upload\_files](../../images/Reset/upload_file.png)](../../images/Reset/upload_file.png)
+<p align="center"><a href="../../images/Reset/upload_file.png"><img src="../../images/Reset/upload_file.png" alt="upload_files"></a></p>
 
 * We launch **Responder** in listening mode
 
-[![responder](../../images/Reset/responder.png)](../../images/Reset/responder.png)
+<p align="center"><a href="../../images/Reset/responder.png"><img src="../../images/Reset/responder.png" alt="responder"></a></p>
 
 When a service (such as an automated account) interacts with these files, it sends its credentials in NTLM format.
 
-[![Responder capture](../../images/Reset/get_nt_hash.png)](../../images/Reset/get_nt_hash.png)
+<p align="center"><a href="../../images/Reset/get_nt_hash.png"><img src="../../images/Reset/get_nt_hash.png" alt="Responder capture"></a></p>
 
 At this stage, ask yourself the question: why is this service interacting with my files ? What role does it play in the AD environment ?
 
@@ -118,11 +118,11 @@ At this stage, ask yourself the question: why is this service interacting with m
 
 Once the hash is retrieved, head to **John the Ripper** to brute force it.
 
-[![John cracking](../../images/Reset/crack_hash1.png)](../../images/Reset/crack_hash1.png)
+<p align="center"><a href="../../images/Reset/crack_hash1.png"><img src="../../images/Reset/crack_hash1.png" alt="John cracking"></a></p>
 
 Once the password is discovered, an **Evil-WinRM** session allows connecting to the machine.
 
-[![evil-winrm user shell](../../images/Reset/evil-winRM_+_user_flag.png)](../../images/Reset/evil-winRM_+_user_flag.png)
+<p align="center"><a href="../../images/Reset/evil-winRM_+_user_flag.png"><img src="../../images/Reset/evil-winRM_+_user_flag.png" alt="evil-winrm user shell"></a></p>
 
 First flag: `user.txt`. But above all, the first anchor point in the environment. It is time to look up and observe the AD infrastructure as a whole.
 
@@ -142,11 +142,11 @@ neo4j console
 
 * Launch the BloodHound collector from the Imapcket suite
 
-[![BloodHound Collect](../../images/Reset/bloodhound_collector.png)](../../images/Reset/bloodhound_collector.png)
+<p align="center"><a href="../../images/Reset/bloodhound_collector.png"><img src="../../images/Reset/bloodhound_collector.png" alt="BloodHound Collect"></a></p>
 
 * Load the data into BloodHound and observe
 
-[![BloodHound import](../../images/Reset/import_bloodhound.png)](../../images/Reset/import_bloodhound.png)
+<p align="center"><a href="../../images/Reset/import_bloodhound.png"><img src="../../images/Reset/import_bloodhound.png" alt="BloodHound import"></a></p>
 
 Questions to ask yourself here:
 
@@ -160,15 +160,15 @@ Questions to ask yourself here:
 
 BloodHound allows identifying accounts vulnerable to **AS-REP Roasting**.
 
-[![ASREProast](../../images/Reset/AS-REProast_users.png)](../../images/Reset/AS-REProast_users.png)
+<p align="center"><a href="../../images/Reset/AS-REProast_users.png"><img src="../../images/Reset/AS-REProast_users.png" alt="ASREProast"></a></p>
 
 We identify **three users** who do not have pre-authentication enabled. This is an opportunity not to be missed.
 
 We retrieve the encrypted TGT tickets, then submit them to John the Ripper.
 
-[![Get-NPUsers](../../images/Reset/Get-NPUsers.png)](../../images/Reset/Get-NPUsers.png)
+<p align="center"><a href="../../images/Reset/Get-NPUsers.png"><img src="../../images/Reset/Get-NPUsers.png" alt="Get-NPUsers"></a></p>
 
-[![John2](../../images/Reset/crack_hash2.png)](../../images/Reset/crack_hash2.png)
+<p align="center"><a href="../../images/Reset/crack_hash2.png"><img src="../../images/Reset/crack_hash2.png" alt="John2"></a></p>
 
 A password is cracked.
 
@@ -180,7 +180,7 @@ A password is cracked.
 
 By analyzing more deeply with BloodHound, we discover that the user whose password we just cracked has the right to reset the password of an account that, in turn, has the right to reset the password of another account, and so on.
 
-[![Reset path](../../images/Reset/kill_chain.png)](../../images/Reset/kill_chain.png)
+<p align="center"><a href="../../images/Reset/kill_chain.png"><img src="../../images/Reset/kill_chain.png" alt="Reset path"></a></p>
 
 This is an escalation chain:
 
@@ -195,11 +195,11 @@ This is an escalation chain:
 The last obtained account has **AllowedToDelegateTo** delegation rights.\
 This is known as **constrained Kerberos delegation**, and it is particularly dangerous if misconfigured.
 
-[![Delegation rights](../../images/Reset/kerberos_delegations.png)](../../images/Reset/kerberos_delegations.png)
+<p align="center"><a href="../../images/Reset/kerberos_delegations.png"><img src="../../images/Reset/kerberos_delegations.png" alt="Delegation rights"></a></p>
 
 With these rights, it is possible to forge a **Service Ticket** for the `cifs` service on behalf of **Administrator**.
 
-[![ST impersonation](../../images/Reset/getST.png)](../../images/Reset/getST.png)
+<p align="center"><a href="../../images/Reset/getST.png"><img src="../../images/Reset/getST.png" alt="ST impersonation"></a></p>
 
 ***
 
@@ -209,7 +209,7 @@ The ST is forged and exported as an environment variable.
 
 All that remains is to connect using **wmiexec.py** or an equivalent tool.
 
-[![Administrator shell](../../images/Reset/root.txt.png)](../../images/Reset/root.txt.png)
+<p align="center"><a href="../../images/Reset/root.txt.png"><img src="../../images/Reset/root.txt.png" alt="Administrator shell"></a></p>
 
 We gain access to the machine with **Domain Admin** rights.\
 And we retrieve the final flag: `root.txt`.
@@ -239,7 +239,7 @@ Comme toujours, on commence par une cartographie de base. Quels services tournen
 nmap -sC -sV -Pn -T4 -p- "$TARGET"
 ```
 
-[![Nmap output](../../images/Reset/nmap.png)](../../images/Reset/nmap.png)
+<p align="center"><a href="../../images/Reset/nmap.png"><img src="../../images/Reset/nmap.png" alt="Nmap output"></a></p>
 
 Quelques points à noter ici :
 
@@ -273,7 +273,7 @@ PASSWORD : mot de passe du compte associé
 ... 
 ```
 
-[![Exegol-history](../../images/Reset/exegol_history.png)](../../images/Reset/exegol_history.png)
+<p align="center"><a href="../../images/Reset/exegol_history.png"><img src="../../images/Reset/exegol_history.png" alt="Exegol-history"></a></p>
 
 Cela évite de devoir les retaper à chaque fois, permet de les utiliser dans des scripts ou des outils (NetExec, Impacket, etc.), et standardise l’environnement d’un opérateur à l’autre.
 
@@ -283,7 +283,7 @@ Cela évite de devoir les retaper à chaque fois, permet de les utiliser dans de
 
 Premier réflexe en présence de DNS : tester un **zone transfer**.
 
-[![DNS Zone Transfer](../../images/Reset/dns_zone_transfer.png)](../../images/Reset/dns_zone_transfer.png)
+<p align="center"><a href="../../images/Reset/dns_zone_transfer.png"><img src="../../images/Reset/dns_zone_transfer.png" alt="DNS Zone Transfer"></a></p>
 
 Malheureusement, l’opération échoue.
 
@@ -293,16 +293,24 @@ Malheureusement, l’opération échoue.
 
 Passons aux ports SMB. On utilise **enum4linux** pour extraire un maximum d’informations sur le domaine et les partages.
 
-[![Enum4linux](../../images/Reset/enum4linux.png)](../../images/Reset/enum4linux.png) [![Shares Enum4linux](../../images/Reset/shares_enum4linux.png)](../../images/Reset/shares_enum4linux.png) Un partage nommé **Data** est accessible.\
-On confirme la présence et les restrictions de ce partage ave smbmap [![SMB shares](../../images/Reset/smbmap.png)](../../images/Reset/smbmap.png)
+<p align="center"><a href="../../images/Reset/enum4linux.png"><img src="../../images/Reset/enum4linux.png" alt="Enum4linux"></a> <a href="../../images/Reset/shares_enum4linux.png"><img src="../../images/Reset/shares_enum4linux.png" alt="Shares Enum4linux"></a> </p>
+
+
+
+Un partage nommé **Data** est accessible.\
+On confirme la présence et les restrictions de ce partage ave smbmap&#x20;
+
+
+
+<p align="center"><a href="../../images/Reset/smbmap.png"><img src="../../images/Reset/smbmap.png" alt="SMB shares"></a></p>
 
 Une connexion via `smbclient` permet de parcourir son contenu.
 
-[![smbclient](../../images/Reset/smb_shares.png)](../../images/Reset/smb_shares.png)
+<p align="center"><a href="../../images/Reset/smb_shares.png"><img src="../../images/Reset/smb_shares.png" alt="smbclient"></a></p>
 
 Chose étrange : les noms de fichiers changent régulièrement. Cela évoque un processus automatique en arrière-plan. Peut-être un **compte de service** ?
 
-[![Filename changed](../../images/Reset/changement_nom_fichiers.png)](../../images/Reset/changement_nom_fichiers.png)
+<p align="center"><a href="../../images/Reset/changement_nom_fichiers.png"><img src="../../images/Reset/changement_nom_fichiers.png" alt="Filename changed"></a></p>
 
 Ce comportement mérite qu'on le provoque... et qu'on en profite.
 
@@ -314,19 +322,19 @@ L’objectif ici est de capturer un **hash NTLM** via une attaque de type **SMB 
 
 * On génère des fichiers piégés avec **ntlm\_theft** (diverses extensions)
 
-[![nthlm\_theft](../../images/Reset/ntlm_theft.png)](../../images/Reset/ntlm_theft.png) [![files](../../images/Reset/genrate_file_ntlm_theft.png)](../../images/Reset/genrate_file_ntlm_theft.png)
+<p align="center"><a href="../../images/Reset/ntlm_theft.png"><img src="../../images/Reset/ntlm_theft.png" alt="nthlm_theft"></a> <a href="../../images/Reset/genrate_file_ntlm_theft.png"><img src="../../images/Reset/genrate_file_ntlm_theft.png" alt="files"></a></p>
 
 * On les upload dans le partage
 
-[![upload\_files](../../images/Reset/upload_file.png)](../../images/Reset/upload_file.png)
+<p align="center"><a href="../../images/Reset/upload_file.png"><img src="../../images/Reset/upload_file.png" alt="upload_files"></a></p>
 
 * On lance **Responder** en écoute
 
-[![responder](../../images/Reset/responder.png)](../../images/Reset/responder.png)
+<p align="center"><a href="../../images/Reset/responder.png"><img src="../../images/Reset/responder.png" alt="responder"></a></p>
 
 Quand un service (comme un compte automatisé) interagit avec ces fichiers, il envoie ses identifiants au format NTLM.
 
-[![Responder capture](../../images/Reset/get_nt_hash.png)](../../images/Reset/get_nt_hash.png)
+<p align="center"><a href="../../images/Reset/get_nt_hash.png"><img src="../../images/Reset/get_nt_hash.png" alt="Responder capture"></a></p>
 
 À ce stade, pose-toi la question : pourquoi ce service interagit-il avec mes fichiers ? Quel rôle joue-t-il dans l’environnement AD ?
 
@@ -336,11 +344,11 @@ Quand un service (comme un compte automatisé) interagit avec ces fichiers, il e
 
 Une fois le hash récupéré, direction **John the Ripper** pour le bruteforce.
 
-[![John cracking](../../images/Reset/crack_hash1.png)](../../images/Reset/crack_hash1.png)
+<p align="center"><a href="../../images/Reset/crack_hash1.png"><img src="../../images/Reset/crack_hash1.png" alt="John cracking"></a></p>
 
 Une fois le mot de passe découvert, une session **Evil-WinRM** permet de se connecter à la machine.
 
-[![evil-winrm user shell](../../images/Reset/evil-winRM_+_user_flag.png)](../../images/Reset/evil-winRM_+_user_flag.png)
+<p align="center"><a href="../../images/Reset/evil-winRM_+_user_flag.png"><img src="../../images/Reset/evil-winRM_+_user_flag.png" alt="evil-winrm user shell"></a></p>
 
 Premier drapeau : `user.txt`.\
 Mais surtout, premier point d’ancrage dans l’environnement. Il est temps de lever la tête et d’observer l’infrastructure AD dans son ensemble.
@@ -362,11 +370,11 @@ neo4j console
 
 * Lancer le collecteur **BloodHound** de la suite Imapcket
 
-[![BloodHound Collect](../../images/Reset/bloodhound_collector.png)](../../images/Reset/bloodhound_collector.png)
+<p align="center"><a href="../../images/Reset/bloodhound_collector.png"><img src="../../images/Reset/bloodhound_collector.png" alt="BloodHound Collect"></a></p>
 
 * Charger les données dans BloodHound et observer
 
-[![BloodHound import](../../images/Reset/import_bloodhound.png)](../../images/Reset/import_bloodhound.png)
+<p align="center"><a href="../../images/Reset/import_bloodhound.png"><img src="../../images/Reset/import_bloodhound.png" alt="BloodHound import"></a></p>
 
 Questions à se poser ici :
 
@@ -380,15 +388,15 @@ Questions à se poser ici :
 
 BloodHound permet d'identifier les comptes vulnérables à **AS-REP Roasting**.
 
-[![ASREProast](../../images/Reset/AS-REProast_users.png)](../../images/Reset/AS-REProast_users.png)
+<p align="center"><a href="../../images/Reset/AS-REProast_users.png"><img src="../../images/Reset/AS-REProast_users.png" alt="ASREProast"></a></p>
 
 On repère **trois utilisateurs** qui n’ont pas la pré-authentification activée. C’est une opportunité à ne pas rater.
 
 On récupère les tickets TGT chiffrés, puis on les soumet à John the Ripper.
 
-[![Get-NPUsers](../../images/Reset/Get-NPUsers.png)](../../images/Reset/Get-NPUsers.png)
+<p align="center"><a href="../../images/Reset/Get-NPUsers.png"><img src="../../images/Reset/Get-NPUsers.png" alt="Get-NPUsers"></a></p>
 
-[![John2](../../images/Reset/crack_hash2.png)](../../images/Reset/crack_hash2.png)
+<p align="center"><a href="../../images/Reset/crack_hash2.png"><img src="../../images/Reset/crack_hash2.png" alt="John2"></a></p>
 
 Un mot de passe tombe.
 
@@ -400,7 +408,7 @@ Un mot de passe tombe.
 
 En analysant plus profondément avec BloodHound, on découvre que l'utilisateur dont on vient de cracker le mot de passe a le droit de réinitialiser le mot de passe d'un compte qui a son toura le droit de réinitialiser le mot de passe d'un compte, etc.
 
-[![Reset path](../../images/Reset/kill_chain.png)](../../images/Reset/kill_chain.png)
+<p align="center"><a href="../../images/Reset/kill_chain.png"><img src="../../images/Reset/kill_chain.png" alt="Reset path"></a></p>
 
 C’est une chaîne d’escalade :
 
@@ -415,11 +423,11 @@ C’est une chaîne d’escalade :
 Le dernier compte obtenu possède des droits de délégation **AllowedToDelegateTo**.\
 C’est ce qu’on appelle de la **délégation Kerberos contrainte**, et c’est particulièrement dangereux si mal configuré.
 
-[![Delegation rights](../../images/Reset/kerberos_delegations.png)](../../images/Reset/kerberos_delegations.png)
+<p align="center"><a href="../../images/Reset/kerberos_delegations.png"><img src="../../images/Reset/kerberos_delegations.png" alt="Delegation rights"></a></p>
 
 Avec ces droits, il est possible de forger un **Service Ticket** pour le service `cifs` au nom de **Administrator**.
 
-[![ST impersonation](../../images/Reset/getST.png)](../../images/Reset/getST.png)
+<p align="center"><a href="../../images/Reset/getST.png"><img src="../../images/Reset/getST.png" alt="ST impersonation"></a></p>
 
 ***
 
@@ -429,7 +437,7 @@ Le ST est forgé et exporté comme variable d’environnement.
 
 Il ne reste plus qu’à se connecter avec **wmiexec.py** ou un équivalent.
 
-[![Administrator shell](../../images/Reset/root.txt.png)](../../images/Reset/root.txt.png)
+<p align="center"><a href="../../images/Reset/root.txt.png"><img src="../../images/Reset/root.txt.png" alt="Administrator shell"></a></p>
 
 On accède à la machine avec les droits **Domain Admin**.\
 Et on récupère le flag final : `root.txt`.
