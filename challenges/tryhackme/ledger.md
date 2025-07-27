@@ -203,7 +203,7 @@ Avant de sauter sur les outils les plus sexy, on reste sobre : un bon vieux scan
 nmap -sC -sV -Pn -T4 -p- <IP>
 ```
 
-[![Nmap output](/images/Ledger/nmap_output.png)](/images/Ledger/nmap_output.png)
+[![Nmap output](/images/Ledger/nmap_output.png)]
 
 ***
 
