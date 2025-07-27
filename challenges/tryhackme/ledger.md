@@ -2,7 +2,7 @@
 
 [🇫🇷 Version française](ledger.md#francais) | [🇬🇧 English version](ledger.md#english)
 
-### English
+## English
 
 **Category:** Active Directory\
 **Platform:** TryHackMe\
@@ -10,7 +10,7 @@
 
 ***
 
-#### 1. Nmap Scan – What does the infrastructure hold?
+### 1. Nmap Scan – What does the infrastructure hold?
 
 Before jumping into the flashy tools, we keep it classic: a good old Nmap scan to lay the foundation of our understanding.
 
@@ -22,7 +22,7 @@ nmap -sC -sV -Pn -T4 -p- <IP>
 
 ***
 
-**1.1 Exegol-history**
+#### **1.1 Exegol-history**
 
 `exegol-history` is a mechanism or module often used in the Exegol environment, a Docker offensive container designed for pentesters and Red Teamers. It allows customization of the working session in the container, notably by loading environment variables when opening an Exegol terminal.
 
@@ -67,7 +67,7 @@ We leak:
 * The Domain name --> `thm.local`
 * The machine's FQDN --> `labyrinth.thm.local`
 
-#### 2. DNS – Can we extract info easily?
+### 2. DNS – Can we extract info easily?
 
 A little zone transfer test — often overlooked but sometimes quite revealing:
 
@@ -79,7 +79,7 @@ No worries, let’s hunt for intel elsewhere.
 
 ***
 
-#### 3. HTTP/HTTPS – Any hope on the web?
+### 3. HTTP/HTTPS – Any hope on the web?
 
 We head to port 80 (HTTP) then 443 (HTTPS). The site shows a default IIS landing page.
 
@@ -87,7 +87,7 @@ We head to port 80 (HTTP) then 443 (HTTPS). The site shows a default IIS landing
 
 ***
 
-#### 4. SMB/RPC – Juicy shares?
+### 4. SMB/RPC – Juicy shares?
 
 <p align="center"><a href="../../images/Ledger/enum4linux.png"><img src="../../images/Ledger/enum4linux.png" alt="enum4linux"></a></p>
 
@@ -95,7 +95,7 @@ We head to port 80 (HTTP) then 443 (HTTPS). The site shows a default IIS landing
 
 ***
 
-#### 5. LDAP – The Rare Gem?
+### 5. LDAP – The Rare Gem?
 
 <p align="center"><a href="../../images/Ledger/ldapsearch.png"><img src="../../images/Ledger/ldapsearch.png" alt="ldapsearch"></a></p>
 
@@ -119,7 +119,7 @@ SUSANNA\_MCKNIGHT
 
 ***
 
-#### 6. RDP – A Gateway to the System?
+### 6. RDP – A Gateway to the System?
 
 We test the possibility that the users found previously can connect via RDP:
 
@@ -137,7 +137,7 @@ We retrieve the `user.txt` flag
 
 ***
 
-#### 7. PrivEsc – Privilege Escalation via Certificates 🧩
+### 7. PrivEsc – Privilege Escalation via Certificates 🧩
 
 We explore the groups to which Susanna belongs and... oh:
 
@@ -165,7 +165,7 @@ And there we have an Administrator TGT. The key to the kingdom.
 
 ***
 
-#### 8. Admin Connection – The Loop is Closed
+### 8. Admin Connection – The Loop is Closed
 
 With a valid TGT, a wmiexec.py from Impacket gives us a direct shell as admin:
 
@@ -187,7 +187,7 @@ Escalation via ADCS (Active Directory Certificate Services)
 
 ***
 
-### Français
+## Français
 
 **Catégorie :** Active Directory\
 **Plateforme :** TryHackMe\
@@ -195,7 +195,7 @@ Escalation via ADCS (Active Directory Certificate Services)
 
 ***
 
-#### 1. Scan Nmap – Que nous réserve l'infrastructure ?
+### 1. Scan Nmap – Que nous réserve l'infrastructure ?
 
 Avant de sauter sur les outils les plus sexy, on reste sobre : un bon vieux scan Nmap pour poser les fondations de notre compréhension.
 
@@ -207,7 +207,7 @@ nmap -sC -sV -Pn -T4 -p- <IP>
 
 ***
 
-**1.1 Exegol-history**
+#### **1.1 Exegol-history**
 
 `exegol-history` est un mécanisme ou module souvent utilisé dans l’environnement Exegol, un conteneur Docker offensif conçu pour les pentesters et Red Teamers. Il permet, entre autres, de personnaliser la session de travail dans le conteneur, notamment via le chargement de variables d’environnement dès l’ouverture d’un terminal Exegol.
 
@@ -252,7 +252,7 @@ On fuite:
 * Le Domain name --> `thm.local`
 * Le FQDN de la machine --> `labyrinth.thm.local`
 
-#### 2. DNS – Peut-on aspirer des infos facilement ?
+### 2. DNS – Peut-on aspirer des infos facilement ?
 
 Un petit test de zone transfer, souvent négligé mais parfois très parlant :
 
@@ -264,7 +264,7 @@ Pas grave, on poursuit notre chasse aux infos ailleurs.
 
 ***
 
-#### 3. HTTP/HTTPS – Espoir sur le web ?
+### 3. HTTP/HTTPS – Espoir sur le web ?
 
 Direction le port 80 (HTTP) puis 443 (HTTPS). L’accès renvoie une page par défaut IIS.
 
@@ -272,7 +272,7 @@ Direction le port 80 (HTTP) puis 443 (HTTPS). L’accès renvoie une page par d�
 
 ***
 
-#### 4. SMB/RPC – Partages juteux ?
+### 4. SMB/RPC – Partages juteux ?
 
 <p align="center"><a href="../../images/Ledger/enum4linux.png"><img src="../../images/Ledger/enum4linux.png" alt="enum4linux"></a></p>
 
@@ -280,7 +280,7 @@ Direction le port 80 (HTTP) puis 443 (HTTPS). L’accès renvoie une page par d�
 
 ***
 
-#### 5. LDAP – La perle rare ?
+### 5. LDAP – La perle rare ?
 
 <p align="center"><a href="../../images/Ledger/ldapsearch.png"><img src="../../images/Ledger/ldapsearch.png" alt="ldapsearch"></a></p>
 
@@ -306,7 +306,7 @@ SUSANNA_MCKNIGHT
 
 ***
 
-#### 6. RDP – Une ouverture vers le système ?
+### 6. RDP – Une ouverture vers le système ?
 
 On teste la possibilité que les users trouvé précédemment puissent se connecter en RDP:
 
@@ -324,7 +324,7 @@ On récupère le flag `user.txt`
 
 ***
 
-#### 7. PrivEsc – L’escalade par les certificats 🧩
+### 7. PrivEsc – L’escalade par les certificats 🧩
 
 On explore les groupes auxquels Susanna appartient et… oh :
 
@@ -352,7 +352,7 @@ Et voilà un TGT Administrator en poche. La clé du royaume.
 
 ***
 
-#### 8. Connexion Admin – La boucle est bouclée
+### 8. Connexion Admin – La boucle est bouclée
 
 Avec un TGT valide, un wmiexec.py de Impacket nous donne un shell direct en tant qu’admin :
 
