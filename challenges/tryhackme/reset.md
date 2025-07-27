@@ -66,9 +66,17 @@ Unfortunately, the operation fails.
 
 Let's move on to the SMB ports. We use **enum4linux** to extract as much information as possible about the domain and shares.
 
+
+
 [![Enum4linux](../../images/Reset/enum4linux.png)](../../images/Reset/enum4linux.png) [![Shares Enum4linux](../../images/Reset/shares_enum4linux.png)](../../images/Reset/shares_enum4linux.png)&#x20;
 
-A share named **Data** is accessible. We confirm the presence and restrictions of this share with smbmap. [![SMB shares](../../images/Reset/smbmap.png)](../../images/Reset/smbmap.png)
+
+
+A share named **Data** is accessible. We confirm the presence and restrictions of this share with smbmap.
+
+
+
+&#x20;[![SMB shares](../../images/Reset/smbmap.png)](../../images/Reset/smbmap.png)
 
 A connection via `smbclient` allows browsing its contents.
 
