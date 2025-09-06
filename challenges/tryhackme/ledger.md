@@ -48,17 +48,16 @@ This avoids retyping them each time, allows use in scripts/tools (NetExec, Impac
 
 Here are the ports detected by Nmap, with a quick analysis of potential opportunities:
 
-| Port | Service  | Interpretation / Action                         |
-| ---- | -------- | ----------------------------------------------- |
-| 53   | DNS      | 🔎 **Test for zone transfer**                   |
-| 80   | HTTP     | 🌐 **Web investigation** (classic site?)        |
-| 88   | Kerberos | 🔓 **ASREPRoasting** if usernames are known     |
-| 135  | RPC      | 📤 Enumeration via **rpcdump**                  |
-| 139  | NetBIOS  | 📂 Enumeration with **smbmap**/**enum4linux**   |
-| 445  | SMB      | 📂 Potential shares, rights, SMB enumeration    |
-| 389  | LDAP     | 🧬 **ldapsearch** to extract accounts           |
-| 443  | HTTPS    | 🌐 **Secure web version**, worth checking out   |
-| 3389 | RDP      | 🔐 **Remote access** if valid credentials exist |
+| Port      | Service       | Interpretation / Action                                        |
+| --------- | ------------- | -------------------------------------------------------------- |
+| 53        | DNS           | 🔎 **Test for zone transfer**                                  |
+| 80        | HTTP          | 🌐 **Web investigation** (classic site?)                       |
+| 88        | Kerberos      | 🔓 **ASREPRoasting** if usernames are known                    |
+| 135 / 139 | RPC / NetBIOS | 📂 Enumeration with **rpcdump**/**enum4linux**                 |
+| 445       | SMB           | 📂 Potential shares, rights, SMB enumeration (smbmap, netexec) |
+| 389       | LDAP          | 🧬 **ldapsearch** to extract accounts                          |
+| 443       | HTTPS         | 🌐 **Secure web version**, worth checking out                  |
+| 3389      | RDP           | 🔐 **Remote access** if valid credentials exist                |
 
 We leak:
 
@@ -203,9 +202,9 @@ Avant de sauter sur les outils les plus sexy, on reste sobre : un bon vieux scan
 nmap -sC -sV -Pn -T4 -p- <IP>
 ```
 
-<p align="center"><a href="../../images/Ledger/nmap_output.png"><img src="../../images/Ledger/nmap_output.png" alt="Nmap output"></a></p>
-
 ***
+
+<figure><img src="../../images/Ledger/nmap_output.png" alt=""><figcaption></figcaption></figure>
 
 #### **1.1 Exegol-history**
 
@@ -225,27 +224,26 @@ PASSWORD : mot de passe du compte associé
 ... 
 ```
 
-<figure><img src="../../images/Ledger/root.txt.png" alt=""><figcaption></figcaption></figure>
-
 Cela évite de devoir les retaper à chaque fois, permet de les utiliser dans des scripts ou des outils (NetExec, Impacket, etc.), et standardise l’environnement d’un opérateur à l’autre.
 
 ***
+
+<figure><img src="../../images/Reset/exegol_history.png" alt=""><figcaption></figcaption></figure>
 
 **📡 Ports ouverts – Analyse initiale**
 
 Voici les ports détectés par Nmap, avec une analyse rapide des opportunités potentielles :
 
-| Port | Service  | Interprétation / Action                       |
-| ---- | -------- | --------------------------------------------- |
-| 53   | DNS      | 🔎 **Zone transfer** à tester                 |
-| 80   | HTTP     | 🌐 **Investigation web** (site classique ?)   |
-| 88   | Kerberos | 🔓 **ASREPRoasting** si usernames connus      |
-| 135  | RPC      | 📤 Enumération via **rpcdump**                |
-| 139  | NetBIOS  | 📂 Enumération avec **smbmap**/**enum4linux** |
-| 445  | SMB      | 📂 Possibles partages, droits, Enum SMB       |
-| 389  | LDAP     | 🧬 **ldapsearch** pour extraire des comptes   |
-| 443  | HTTPS    | 🌐 **Version sécurisée du site**, à fouiller  |
-| 3389 | RDP      | 🔐 **Accès distant** si compte valide         |
+| Port      | Service       | Interprétation / Action                      |
+| --------- | ------------- | -------------------------------------------- |
+| 53        | DNS           | 🔎 **Zone transfer** à tester                |
+| 80        | HTTP          | 🌐 **Investigation web** (site classique ?)  |
+| 88        | Kerberos      | 🔓 **ASREPRoasting** si usernames connus     |
+| 135 / 139 | RPC / NetBIOS | 📂 Enumération avec **enum4linux, rpcdump**  |
+| 445       | SMB           | 📂 Enumeration shares SMB (smbmap, netexec)  |
+| 389       | LDAP          | 🧬 **ldapsearch** pour extraire des comptes  |
+| 443       | HTTPS         | 🌐 **Version sécurisée du site**, à fouiller |
+| 3389      | RDP           | 🔐 **Accès distant** si compte valide        |
 
 On fuite:
 
